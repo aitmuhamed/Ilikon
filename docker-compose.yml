@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ilikon-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ilikon
+      POSTGRES_PASSWORD: ilikon_dev_password
+      POSTGRES_DB: ilikon
+    ports:
+      - "5439:5432"
+    volumes:
+      - ilikon_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ilikon -d ilikon"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ilikon-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://ilikon:ilikon_dev_password@db:5432/ilikon?schema=public
+      AUTH_SECRET: ${AUTH_SECRET:-change-me-in-production-min-32-characters-long}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    volumes:
+      - ilikon_uploads:/app/storage/uploads
+    profiles: ["full"]
+
+volumes:
+  ilikon_pgdata:
+  ilikon_uploads:

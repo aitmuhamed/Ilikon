@@ -1,0 +1,1703 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  Иликон (Уужим Эмийн Сан) — pharmacy platform data model
+//
+//  Conventions
+//   • Money is stored as Int in MNT (₮ has no circulating subunit). This keeps
+//     every arithmetic path exact and avoids Decimal serialisation hazards.
+//   • Soft deletion via `deletedAt` on entities referenced by historical
+//     orders (products, categories, brands, users, coupons).
+//   • Localised free text lives in *Translation tables keyed by (parent,
+//     locale) so a new language is a data migration, not a schema change.
+//   • Every table carries createdAt/updatedAt. Indexes are declared on every
+//     foreign key used for filtering plus the customer-facing search paths.
+// ═══════════════════════════════════════════════════════════════════════════
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────── enums ────────────────────────────────────
+
+enum Locale {
+  mn
+  en
+  ru
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+  PENDING
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum OrderStatus {
+  NEW // Шинэ захиалга
+  CONFIRMING // Баталгаажуулж байна
+  PREPARING // Бэлтгэж байна
+  SHIPPED // Хүргэлтэнд гарсан
+  DELIVERED // Хүлээн авсан
+  CANCELLED // Цуцлагдсан
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  BANK_TRANSFER
+  CARD
+  QPAY
+}
+
+enum PaymentStatus {
+  PENDING
+  AWAITING_CONFIRMATION
+  PAID
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum DeliveryMethod {
+  PHARMACY_PICKUP
+  HOME_DELIVERY
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+  RETURNED
+}
+
+enum PrescriptionStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  CLARIFICATION_REQUESTED
+  EXPIRED
+}
+
+enum PrescriptionReviewAction {
+  APPROVE
+  REJECT
+  REQUEST_CLARIFICATION
+  NOTE
+}
+
+enum InventoryTxType {
+  STOCK_IN
+  STOCK_OUT
+  SALE
+  RETURN
+  ADJUSTMENT
+  DAMAGED
+  EXPIRED
+  RESERVED
+  RELEASED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+enum NotificationAudience {
+  CUSTOMER
+  STAFF
+}
+
+enum NotificationType {
+  ORDER_CONFIRMED
+  ORDER_PREPARING
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  PRESCRIPTION_APPROVED
+  PRESCRIPTION_REJECTED
+  PRESCRIPTION_CLARIFICATION
+  PROMOTION
+  NEW_ORDER
+  LOW_STOCK
+  EXPIRING_PRODUCT
+  NEW_PRESCRIPTION
+  NEW_CONSULTATION
+  CONSULTATION_ESCALATION
+  PAYMENT_ISSUE
+  SYSTEM
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum PromotionPlacement {
+  HOME_HERO
+  HOME_STRIP
+  CATEGORY_BANNER
+  SIDEBAR
+}
+
+// ──────────────────────── identity, roles, access ─────────────────────────
+
+model Role {
+  id          String           @id @default(cuid())
+  key         String           @unique // super_admin, admin, pharmacist, ...
+  name        String
+  nameMn      String
+  description String?
+  isSystem    Boolean          @default(false)
+  isStaff     Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  permissions RolePermission[]
+  users       User[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique // products.create, prescriptions.verify
+  group       String
+  label       String
+  description String?
+  createdAt   DateTime         @default(now())
+  roles       RolePermission[]
+
+  @@index([group])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String?    @unique
+  phone         String     @unique
+  passwordHash  String
+  fullName      String
+  status        UserStatus @default(ACTIVE)
+  isStaff       Boolean    @default(false)
+  roleId        String?
+  locale        Locale     @default(mn)
+  emailVerified DateTime?
+  lastLoginAt   DateTime?
+
+  // Promotional notifications are opt-in only.
+  marketingOptIn Boolean @default(false)
+
+  // Staff / pharmacist professional record
+  licenseNumber String?
+  jobTitle      String?
+  avatarKey     String?
+  notes         String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  role                Role?                  @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  addresses           Address[]
+  orders              Order[]                @relation("customerOrders")
+  carts               Cart[]
+  wishlist            Wishlist?
+  prescriptions       Prescription[]         @relation("prescriptionOwner")
+  prescriptionReviews PrescriptionReview[]
+  reviews             Review[]
+  notifications       Notification[]
+  passwordResetTokens PasswordResetToken[]
+  auditLogs           AuditLog[]
+  conversations       ChatbotConversation[]
+  inventoryTx         InventoryTransaction[]
+  orderEvents         OrderEvent[]
+  couponRedemptions   CouponRedemption[]
+  assignedDeliveries  Delivery[]             @relation("courier")
+  orderNotes          OrderNote[]
+  consultations       Consultation[]         @relation("consultationCustomer")
+  consultationReviews ConsultationReview[]   @relation("consultationReviewer")
+
+  @@index([roleId])
+  @@index([status])
+  @@index([isStaff])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model Address {
+  id           String    @id @default(cuid())
+  userId       String
+  label        String?
+  recipient    String
+  phone        String
+  city         String    @default("Улаанбаатар")
+  district     String
+  khoroo       String
+  addressLine  String
+  instructions String?
+  isDefault    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// ───────────────────────── catalogue: taxonomy ────────────────────────────
+
+model Category {
+  id       String  @id @default(cuid())
+  slug     String  @unique
+  name     String // canonical (mn)
+  parentId String?
+  imageKey String?
+  icon     String?
+
+  sortOrder  Int     @default(0)
+  isActive   Boolean @default(true)
+  isFeatured Boolean @default(false)
+
+  metaTitle       String?
+  metaDescription String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  parent       Category?             @relation("categoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Category[]            @relation("categoryTree")
+  products     Product[]
+  translations CategoryTranslation[]
+  promotions   Promotion[]
+
+  @@index([parentId])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("categories")
+}
+
+model CategoryTranslation {
+  id          String   @id @default(cuid())
+  categoryId  String
+  locale      Locale
+  name        String
+  description String?
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, locale])
+  @@map("category_translations")
+}
+
+model Brand {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  logoKey     String?
+  description String?
+  country     String?
+  website     String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  products    Product[]
+
+  @@index([isActive])
+  @@map("brands")
+}
+
+model Manufacturer {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  country   String?
+  address   String?
+  contact   String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  products  Product[]
+
+  @@map("manufacturers")
+}
+
+// ───────────────────────── catalogue: products ────────────────────────────
+
+model Product {
+  id             String  @id @default(cuid())
+  sku            String  @unique
+  barcode        String? @unique
+  slug           String  @unique
+  name           String // canonical (mn) — on-row for fast search
+  categoryId     String
+  brandId        String?
+  manufacturerId String?
+
+  // Pharmacy-critical flags
+  prescriptionRequired Boolean @default(false)
+  isControlled         Boolean @default(false)
+
+  // Commerce (MNT)
+  price         Int
+  discountPrice Int?
+  costPrice     Int?
+  taxRatePct    Int  @default(0)
+
+  status     ProductStatus @default(ACTIVE)
+  isFeatured Boolean       @default(false)
+  isNew      Boolean       @default(false)
+
+  // Physical / regulatory
+  weightGrams    Int?
+  packageSize    String?
+  dosageForm     String?
+  strength       String?
+  expiryDate     DateTime? // earliest batch expiry, denormalised for alerts
+  registrationNo String?
+
+  // Lowercase, comma-joined active ingredients for ingredient search
+  activeIngredientsIndex String?
+
+  ratingAvg   Float @default(0)
+  ratingCount Int   @default(0)
+  soldCount   Int   @default(0)
+  viewCount   Int   @default(0)
+
+  metaTitle       String?
+  metaDescription String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  category         Category                     @relation(fields: [categoryId], references: [id])
+  brand            Brand?                       @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  manufacturer     Manufacturer?                @relation(fields: [manufacturerId], references: [id], onDelete: SetNull)
+  images           ProductImage[]
+  translations     ProductTranslation[]
+  inventory        Inventory?
+  batches          InventoryBatch[]
+  inventoryTx      InventoryTransaction[]
+  orderItems       OrderItem[]
+  cartItems        CartItem[]
+  wishlistItems    WishlistItem[]
+  reviews          Review[]
+  relatedFrom      RelatedProduct[]             @relation("relatedSource")
+  relatedTo        RelatedProduct[]             @relation("relatedTarget")
+  promotions       Promotion[]
+  events           AnalyticsEvent[]
+  ingredients      ProductIngredient[]
+  consultationRecs ConsultationRecommendation[]
+  consultationMeds ConsultationMedication[]
+
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([manufacturerId])
+  @@index([status])
+  @@index([isFeatured])
+  @@index([prescriptionRequired])
+  @@index([price])
+  @@index([soldCount])
+  @@index([createdAt])
+  @@index([expiryDate])
+  @@index([name])
+  @@map("products")
+}
+
+model ProductTranslation {
+  id                String  @id @default(cuid())
+  productId         String
+  locale            Locale
+  name              String
+  shortDescription  String?
+  description       String?
+  ingredients       String?
+  activeIngredients String?
+  dosage            String?
+  usage             String?
+  warnings          String?
+  sideEffects       String?
+  storage           String?
+  product           Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, locale])
+  @@index([name])
+  @@map("product_translations")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  fileKey   String
+  alt       String?
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model RelatedProduct {
+  productId String
+  relatedId String
+  sortOrder Int     @default(0)
+  product   Product @relation("relatedSource", fields: [productId], references: [id], onDelete: Cascade)
+  related   Product @relation("relatedTarget", fields: [relatedId], references: [id], onDelete: Cascade)
+
+  @@id([productId, relatedId])
+  @@index([relatedId])
+  @@map("related_products")
+}
+
+// ───────────────────────────── inventory ──────────────────────────────────
+
+model Inventory {
+  id                String    @id @default(cuid())
+  productId         String    @unique
+  quantity          Int       @default(0) // authoritative sellable stock
+  reserved          Int       @default(0) // held by open orders
+  lowStockThreshold Int       @default(10)
+  reorderLevel      Int       @default(20)
+  shelfLocation     String?
+  lastCountedAt     DateTime?
+  updatedAt         DateTime  @updatedAt
+  product           Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([quantity])
+  @@map("inventory")
+}
+
+model InventoryBatch {
+  id         String   @id @default(cuid())
+  productId  String
+  lotNumber  String
+  quantity   Int
+  expiryDate DateTime
+  receivedAt DateTime @default(now())
+  supplier   String?
+  isBlocked  Boolean  @default(false) // expired / quarantined — never sellable
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, lotNumber])
+  @@index([expiryDate])
+  @@index([productId])
+  @@map("inventory_batches")
+}
+
+model InventoryTransaction {
+  id            String          @id @default(cuid())
+  productId     String
+  type          InventoryTxType
+  quantityDelta Int // signed
+  balanceAfter  Int
+  reason        String?
+  reference     String? // order number, invoice no, lot no
+  batchId       String?
+  performedById String?
+  createdAt     DateTime        @default(now())
+
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  performedBy User?   @relation(fields: [performedById], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("inventory_transactions")
+}
+
+// ────────────────────────── cart & wishlist ───────────────────────────────
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?
+  sessionId String?    @unique // anonymous cart key (httpOnly cookie)
+  couponId  String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coupon    Coupon?    @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  items     CartItem[]
+
+  @@index([userId])
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
+  @@index([productId])
+  @@map("cart_items")
+}
+
+model Wishlist {
+  id        String         @id @default(cuid())
+  userId    String         @unique
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     WishlistItem[]
+
+  @@map("wishlists")
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  wishlistId String
+  productId  String
+  createdAt  DateTime @default(now())
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([wishlistId, productId])
+  @@index([productId])
+  @@map("wishlist_items")
+}
+
+// ─────────────────────────────── orders ───────────────────────────────────
+
+model Order {
+  id          String      @id @default(cuid())
+  orderNumber String      @unique // ILK-20260820-0001
+  userId      String?
+  status      OrderStatus @default(NEW)
+
+  // Contact snapshot — orders stay readable even if the account changes.
+  customerName  String
+  customerPhone String
+  customerEmail String?
+
+  subtotal      Int
+  discountTotal Int @default(0)
+  deliveryFee   Int @default(0)
+  taxTotal      Int @default(0)
+  total         Int
+
+  couponId   String?
+  couponCode String?
+
+  // Set when any line item requires a prescription. Fulfilment is blocked
+  // until a pharmacist verifies the attached prescription.
+  requiresPrescription Boolean @default(false)
+  prescriptionCleared  Boolean @default(false)
+
+  customerNote String?
+  cancelReason String?
+  confirmedAt  DateTime?
+  deliveredAt  DateTime?
+  cancelledAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user          User?             @relation("customerOrders", fields: [userId], references: [id], onDelete: SetNull)
+  coupon        Coupon?           @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  items         OrderItem[]
+  payment       Payment?
+  delivery      Delivery?
+  events        OrderEvent[]
+  notes         OrderNote[]
+  prescriptions Prescription[]
+  redemption    CouponRedemption?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([customerPhone])
+  @@index([requiresPrescription])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String?
+
+  // Immutable snapshot of what was sold.
+  sku                  String
+  name                 String
+  unitPrice            Int
+  discountPerUnit      Int     @default(0)
+  quantity             Int
+  lineTotal            Int
+  prescriptionRequired Boolean @default(false)
+  imageKey             String?
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model OrderEvent {
+  id        String       @id @default(cuid())
+  orderId   String
+  status    OrderStatus?
+  title     String
+  message   String?
+  actorId   String?
+  isSystem  Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  order     Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor     User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("order_events")
+}
+
+model OrderNote {
+  id         String   @id @default(cuid())
+  orderId    String
+  authorId   String?
+  body       String
+  isInternal Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("order_notes")
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  orderId      String        @unique
+  method       PaymentMethod
+  status       PaymentStatus @default(PENDING)
+  amount       Int
+  currency     String        @default("MNT")
+  providerRef  String? // gateway invoice / transaction id
+  providerName String?
+
+  // Non-sensitive gateway response only. Card data is never stored.
+  metadata Json?
+
+  paidAt        DateTime?
+  failureReason String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([method])
+  @@map("payments")
+}
+
+model Delivery {
+  id           String         @id @default(cuid())
+  orderId      String         @unique
+  method       DeliveryMethod
+  status       DeliveryStatus @default(PENDING)
+  recipient    String?
+  phone        String?
+  city         String?
+  district     String?
+  khoroo       String?
+  addressLine  String?
+  instructions String?
+  fee          Int            @default(0)
+  courierId    String?
+  scheduledFor DateTime?
+  dispatchedAt DateTime?
+  deliveredAt  DateTime?
+  trackingNote String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  order        Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  courier      User?          @relation("courier", fields: [courierId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([courierId])
+  @@map("deliveries")
+}
+
+// ────────────────────────── prescriptions ─────────────────────────────────
+
+model Prescription {
+  id      String  @id @default(cuid())
+  code    String  @unique // RX-20260820-0007
+  userId  String
+  orderId String?
+
+  // Object key only. Files are served through an authorised, audit-logged
+  // route — never from a public bucket URL.
+  fileKey   String
+  fileName  String
+  mimeType  String
+  sizeBytes Int
+
+  status PrescriptionStatus @default(PENDING)
+
+  patientName  String?
+  doctorName   String?
+  clinic       String?
+  issuedAt     DateTime?
+  expiresAt    DateTime?
+  customerNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User                 @relation("prescriptionOwner", fields: [userId], references: [id], onDelete: Cascade)
+  order   Order?               @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  reviews PrescriptionReview[]
+
+  @@index([userId])
+  @@index([orderId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("prescriptions")
+}
+
+model PrescriptionReview {
+  id             String                   @id @default(cuid())
+  prescriptionId String
+  reviewerId     String
+  action         PrescriptionReviewAction
+  resultStatus   PrescriptionStatus
+  reason         String?
+  pharmacistNote String?
+  createdAt      DateTime                 @default(now())
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  reviewer     User         @relation(fields: [reviewerId], references: [id])
+
+  @@index([prescriptionId])
+  @@index([reviewerId])
+  @@map("prescription_reviews")
+}
+
+// ──────────────────── coupons, promotions, reviews ────────────────────────
+
+model Coupon {
+  id                String       @id @default(cuid())
+  code              String       @unique
+  description       String?
+  discountType      DiscountType
+  discountValue     Int // percent (1-100) or MNT amount
+  minOrderAmount    Int          @default(0)
+  maxDiscountAmount Int?
+  startsAt          DateTime
+  endsAt            DateTime
+  usageLimit        Int?
+  perCustomerLimit  Int          @default(1)
+  usedCount         Int          @default(0)
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  deletedAt         DateTime?
+
+  orders      Order[]
+  carts       Cart[]
+  redemptions CouponRedemption[]
+
+  @@index([isActive])
+  @@index([endsAt])
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id        String   @id @default(cuid())
+  couponId  String
+  userId    String?
+  orderId   String   @unique
+  amount    Int
+  createdAt DateTime @default(now())
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([couponId])
+  @@index([userId])
+  @@map("coupon_redemptions")
+}
+
+model Promotion {
+  id         String             @id @default(cuid())
+  title      String
+  subtitle   String?
+  imageKey   String?
+  linkUrl    String?
+  placement  PromotionPlacement @default(HOME_STRIP)
+  badgeText  String?
+  bgColor    String?
+  sortOrder  Int                @default(0)
+  isActive   Boolean            @default(true)
+  startsAt   DateTime?
+  endsAt     DateTime?
+  categoryId String?
+  productId  String?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  category     Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  product      Product?               @relation(fields: [productId], references: [id], onDelete: SetNull)
+  translations PromotionTranslation[]
+
+  @@index([placement])
+  @@index([isActive])
+  @@map("promotions")
+}
+
+model PromotionTranslation {
+  id          String    @id @default(cuid())
+  promotionId String
+  locale      Locale
+  title       String
+  subtitle    String?
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, locale])
+  @@map("promotion_translations")
+}
+
+model Review {
+  id              String       @id @default(cuid())
+  productId       String
+  userId          String
+  orderId         String?
+  rating          Int // 1..5
+  title           String?
+  comment         String?
+  status          ReviewStatus @default(PENDING)
+  isVerifiedBuyer Boolean      @default(false)
+  moderatedById   String?
+  moderatedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([productId])
+  @@index([status])
+  @@map("reviews")
+}
+
+// ─────────────────────── notifications & chatbot ──────────────────────────
+
+model Notification {
+  id        String               @id @default(cuid())
+  userId    String? // null = broadcast to the audience
+  audience  NotificationAudience @default(CUSTOMER)
+  type      NotificationType
+  title     String
+  body      String
+  linkUrl   String?
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime             @default(now())
+  user      User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([audience])
+  @@index([readAt])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model ChatbotConversation {
+  id        String  @id @default(cuid())
+  userId    String?
+  sessionId String  @unique
+  locale    Locale  @default(mn)
+  title     String?
+
+  // Set when the bot escalated the conversation to a human pharmacist.
+  escalatedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages ChatbotMessage[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("chatbot_conversations")
+}
+
+model ChatbotMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           ChatRole
+  content        String
+
+  // Grounded product cards / quick actions rendered with the message.
+  attachments Json?
+  intent      String?
+  createdAt   DateTime @default(now())
+
+  conversation ChatbotConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("chatbot_messages")
+}
+
+// ───────────────────── audit, analytics, settings ─────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorLabel String?
+  action     String // product.update, prescription.verify, ...
+  entity     String
+  entityId   String?
+  summary    String?
+  changes    Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model AnalyticsEvent {
+  id   String @id @default(cuid())
+  name String // product_viewed, add_to_cart, checkout_started, ...
+
+  // Anonymous, rotating session id. No cross-site identifiers collected.
+  sessionId String?
+  userId    String?
+  productId String?
+  value     Int?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([name])
+  @@index([createdAt])
+  @@index([productId])
+  @@map("analytics_events")
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  group     String   @default("general")
+  updatedAt DateTime @updatedAt
+
+  @@index([group])
+  @@map("settings")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  AI health consultation ("Иликон-той зөвлөлдөх")
+//
+//  Design rules for this section, in priority order:
+//
+//   • EVERY clinical statement is traceable. Guidelines, contraindications and
+//     interactions live in tables carrying a `sourceId` that points at a
+//     `KnowledgeSource` row with a version and an approving pharmacist. The AI
+//     may phrase them; it may never author them.
+//   • The recommendation trail is immutable. What was asked, what was answered,
+//     which red flags fired, which products were *considered* versus *shown*,
+//     and which safety check produced which verdict are all stored — an auditor
+//     can replay any consultation without the model.
+//   • Health data is sensitive. Rows carry `expiresAt` so the retention policy
+//     can purge them, and `purgedAt` records that it happened rather than
+//     silently losing the audit trail.
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum ConsultationStatus {
+  DRAFT // created; disclaimer not yet accepted
+  IN_PROGRESS // questionnaire under way
+  ASSESSED // AI assessment produced
+  PHARMACIST_REVIEW // handed to a pharmacist, awaiting action
+  REVIEWED // a pharmacist has acted
+  ABANDONED // customer left mid-way
+}
+
+enum ConsultationStep {
+  CONSENT
+  BASICS
+  COMPLAINT
+  SYMPTOM_DETAILS
+  MEDICAL_HISTORY
+  ALLERGIES
+  MEDICATIONS
+  RED_FLAG_SCREENING
+  RESULT
+}
+
+/// Four triage levels. EMERGENCY is level 1, the most urgent.
+enum TriageLevel {
+  EMERGENCY // 1 — immediate medical attention, no product recommendation
+  URGENT_MEDICAL_REVIEW // 2 — doctor / clinic assessment soon
+  PHARMACIST_CONSULTATION // 3 — an OTC option may exist, a professional must review
+  SELF_CARE // 4 — general self-care and OTC information may be appropriate
+}
+
+enum RecommendationType {
+  EMERGENCY_CARE
+  DOCTOR_REVIEW
+  PHARMACIST_CONSULT
+  OTC_GUIDANCE
+}
+
+enum AgeBand {
+  UNDER_2
+  AGE_2_5
+  AGE_6_12
+  AGE_13_17
+  AGE_18_64
+  AGE_65_PLUS
+}
+
+enum SexOption {
+  MALE
+  FEMALE
+  UNDISCLOSED
+}
+
+enum PregnancyStatus {
+  PREGNANT
+  POSSIBLY_PREGNANT
+  BREASTFEEDING
+  NEITHER
+  UNDISCLOSED
+}
+
+/// How the complaint behaves over time — drives the "stop self-treating"
+/// rule in the triage engine.
+enum SymptomCourse {
+  ACUTE
+  PERSISTENT
+  RECURRENT
+  CHRONIC
+}
+
+enum RedFlagSource {
+  RULE // a structured answer matched a screening rule
+  FREE_TEXT // a pattern matched the customer's own words
+  LLM // the model flagged it; rules never un-flag it
+  PHARMACIST // added by a human during review
+}
+
+enum RedFlagSeverity {
+  EMERGENCY
+  URGENT
+}
+
+enum SafetyCheckType {
+  AGE
+  ALLERGY
+  PREGNANCY
+  BREASTFEEDING
+  CONDITION
+  INTERACTION
+  DUPLICATE_INGREDIENT
+  PRESCRIPTION_ONLY
+  AVAILABILITY
+  EXPIRY
+  DOSAGE
+  GUIDELINE_SCOPE
+}
+
+enum SafetyCheckOutcome {
+  PASS
+  WARN // may be shown, with the warning attached
+  BLOCK // never shown
+  UNKNOWN // cannot be determined -> pharmacist review, never a guess
+}
+
+enum RecommendationStatus {
+  SAFE_TO_SHOW
+  PHARMACIST_REVIEW_REQUIRED
+  BLOCKED
+}
+
+enum InteractionStatus {
+  SAFE
+  CAUTION
+  SIGNIFICANT_RISK
+  UNKNOWN
+}
+
+enum ConsultationReviewAction {
+  ACCEPT
+  MODIFY
+  REJECT
+  NOTE
+  REQUEST_INFO
+  RECOMMEND_PRODUCT
+}
+
+enum KnowledgeSourceType {
+  PACKAGE_INSERT
+  PRODUCT_INFORMATION
+  PHARMACY_PROTOCOL
+  DRUG_INTERACTION_DB
+  CATALOGUE
+  FAQ
+}
+
+enum MedicationEntrySource {
+  CATALOGUE_SEARCH
+  MANUAL
+  BARCODE
+  PHOTO
+}
+
+enum ContraindicationScope {
+  AGE
+  PREGNANCY
+  BREASTFEEDING
+  CONDITION
+  ALLERGY
+}
+
+enum RuleSeverity {
+  BLOCK // never recommend
+  PHARMACIST_REVIEW // only a pharmacist may clear it
+  WARN // show with the warning attached
+}
+
+/// One AI consultation session.
+model Consultation {
+  id         String  @id @default(cuid())
+  code       String  @unique // AIC-20260820-0001
+  userId     String?
+  /// Continuation key held by the browser so an anonymous visitor can finish
+  /// the questionnaire without an account. Not a durable identifier.
+  sessionKey String  @unique
+
+  locale      Locale             @default(mn)
+  status      ConsultationStatus @default(DRAFT)
+  currentStep ConsultationStep   @default(CONSENT)
+
+  // ── consent (§1, §28) ──────────────────────────────────────────────────
+  disclaimerAcceptedAt DateTime?
+  disclaimerVersion    String?
+
+  // ── step 1: basic information (§3) ─────────────────────────────────────
+  ageBand        AgeBand?
+  exactAgeYears  Int?
+  exactAgeMonths Int?
+  sex            SexOption?
+  pregnancy      PregnancyStatus?
+
+  // ── step 2: main complaint (§4) ────────────────────────────────────────
+  primarySymptom    String? // symptom code from the catalogue
+  symptomFreeText   String?
+  secondarySymptoms String[] @default([])
+
+  // ── step 3: symptom details (§5, §11) ──────────────────────────────────
+  onsetCode     String?
+  durationHours Int?
+  course        SymptomCourse?
+  severity      Int? // 0-10, self-reported
+  worsening     Boolean?
+
+  // ── assessment output (§10, §25) ───────────────────────────────────────
+  triageLevel              TriageLevel?
+  recommendationType       RecommendationType?
+  triageReason             String?
+  aiUnderstood             String? // 1. What I understood
+  aiSafetyAssessment       String? // 2. Safety assessment
+  aiNextStep               String? // 3. Recommended next step
+  aiPrecautions            String? // 5. Important precautions
+  aiSeekCare               String? // 6. When to seek medical care
+  selfCareEligible         Boolean             @default(false)
+  pharmacistReviewRequired Boolean             @default(false)
+
+  // ── provenance (§29) ───────────────────────────────────────────────────
+  aiModel       String?
+  promptVersion String?
+  rulesVersion  String?
+  llmUsed       Boolean @default(false)
+
+  startedAt   DateTime  @default(now())
+  assessedAt  DateTime?
+  completedAt DateTime?
+  handedOffAt DateTime?
+  reviewedAt  DateTime?
+  /// Retention horizon. The purge job clears answers and free text after this.
+  expiresAt   DateTime?
+  purgedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user            User?                        @relation("consultationCustomer", fields: [userId], references: [id], onDelete: SetNull)
+  answers         ConsultationAnswer[]
+  conditions      ConsultationCondition[]
+  allergies       ConsultationAllergy[]
+  medications     ConsultationMedication[]
+  redFlags        ConsultationRedFlag[]
+  safetyChecks    ConsultationSafetyCheck[]
+  recommendations ConsultationRecommendation[]
+  reviews         ConsultationReview[]
+  auditEntries    ConsultationAuditEntry[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([triageLevel])
+  @@index([primarySymptom])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@map("consultations")
+}
+
+/// Every question the engine asked and the answer it received, in order.
+model ConsultationAnswer {
+  id             String           @id @default(cuid())
+  consultationId String
+  step           ConsultationStep
+  questionKey    String
+  /// The question exactly as the customer saw it — the wording is part of the
+  /// audit trail, so a later copy change cannot rewrite history.
+  questionText   String
+  answerValue    Json
+  answerLabel    String?
+  isRedFlagProbe Boolean          @default(false)
+  sortOrder      Int              @default(0)
+  askedAt        DateTime         @default(now())
+  answeredAt     DateTime         @default(now())
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  @@unique([consultationId, questionKey])
+  @@index([consultationId])
+  @@map("consultation_answers")
+}
+
+model ConsultationCondition {
+  id             String   @id @default(cuid())
+  consultationId String
+  conditionCode  String // hypertension, diabetes, asthma, ...
+  detail         String?
+  createdAt      DateTime @default(now())
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  @@unique([consultationId, conditionCode])
+  @@index([consultationId])
+  @@map("consultation_conditions")
+}
+
+/// Declared drug allergies. Used as a hard safety constraint (§7).
+model ConsultationAllergy {
+  id             String   @id @default(cuid())
+  consultationId String
+  medication     String
+  /// Resolved active ingredient key when the name could be matched. Null means
+  /// "unmatched" — which forces pharmacist review rather than a guess.
+  ingredientKey  String?
+  reaction       String?
+  createdAt      DateTime @default(now())
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  @@index([consultationId])
+  @@index([ingredientKey])
+  @@map("consultation_allergies")
+}
+
+/// Medicines, vitamins and supplements the customer already takes (§6).
+model ConsultationMedication {
+  id             String                @id @default(cuid())
+  consultationId String
+  name           String
+  dose           String?
+  frequency      String?
+  source         MedicationEntrySource @default(MANUAL)
+  productId      String?
+  barcode        String?
+  /// Object key of an uploaded photo of the package. Served only through the
+  /// authorised, audit-logged file route.
+  photoKey       String?
+  ingredientKey  String?
+  /// True when the name could not be resolved to a known ingredient, which
+  /// makes every interaction verdict involving it UNKNOWN.
+  unresolved     Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  product      Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([consultationId])
+  @@index([productId])
+  @@index([ingredientKey])
+  @@map("consultation_medications")
+}
+
+/// A red flag detected by the screening agent (§9).
+model ConsultationRedFlag {
+  id             String          @id @default(cuid())
+  consultationId String
+  code           String
+  label          String
+  severity       RedFlagSeverity @default(EMERGENCY)
+  source         RedFlagSource   @default(RULE)
+  evidence       String? // the answer or phrase that triggered it
+  detectedAt     DateTime        @default(now())
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  @@unique([consultationId, code])
+  @@index([consultationId])
+  @@index([code])
+  @@map("consultation_red_flags")
+}
+
+/// One row per safety check run against one candidate product (§16, §17, §18).
+model ConsultationSafetyCheck {
+  id             String             @id @default(cuid())
+  consultationId String
+  productId      String?
+  productName    String?
+  type           SafetyCheckType
+  outcome        SafetyCheckOutcome
+  /// Machine-readable reason code, e.g. `age.below_min`, `interaction.unknown`.
+  code           String
+  detail         String?
+  ingredientKey  String?
+  ruleId         String?
+  sourceId       String?
+  createdAt      DateTime           @default(now())
+
+  consultation Consultation     @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  source       KnowledgeSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([consultationId])
+  @@index([type])
+  @@index([outcome])
+  @@map("consultation_safety_checks")
+}
+
+/// A product the engine considered. `status` records whether it was actually
+/// shown, held for pharmacist review, or blocked — so "products considered"
+/// and "products recommended" are both auditable (§29).
+model ConsultationRecommendation {
+  id             String  @id @default(cuid())
+  consultationId String
+  productId      String?
+
+  // Snapshot — the card stays readable even if the catalogue row changes.
+  productName          String
+  categoryName         String?
+  activeIngredients    String?
+  dosageForm           String?
+  strength             String?
+  packageSize          String?
+  price                Int?
+  prescriptionRequired Boolean @default(false)
+  stockQuantity        Int?
+  imageKey             String?
+
+  status            RecommendationStatus @default(PHARMACIST_REVIEW_REQUIRED)
+  rank              Int                  @default(0)
+  safetyScore       Int                  @default(0)
+  relevanceScore    Int                  @default(0)
+  /// Why this category may be relevant — phrased from the guideline, never
+  /// invented by the model.
+  reason            String?
+  safetyNotes       String?
+  interactionStatus InteractionStatus    @default(UNKNOWN)
+  blockedReason     String?
+  guidelineId       String?
+  sourceId          String?
+  /// Set when a pharmacist added this product during review.
+  addedByPharmacist Boolean              @default(false)
+  createdAt         DateTime             @default(now())
+
+  consultation Consultation     @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  product      Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
+  guideline    OtcGuideline?    @relation(fields: [guidelineId], references: [id], onDelete: SetNull)
+  source       KnowledgeSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([consultationId])
+  @@index([productId])
+  @@index([status])
+  @@map("consultation_recommendations")
+}
+
+/// Pharmacist action on a consultation (§20, §21).
+model ConsultationReview {
+  id                       String                   @id @default(cuid())
+  consultationId           String
+  pharmacistId             String
+  action                   ConsultationReviewAction
+  /// Immutable snapshot of what the AI proposed at the moment of review.
+  aiRecommendation         Json?
+  pharmacistRecommendation String?
+  reasonForChange          String?
+  note                     String?
+  triageOverride           TriageLevel?
+  createdAt                DateTime                 @default(now())
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  pharmacist   User         @relation("consultationReviewer", fields: [pharmacistId], references: [id])
+
+  @@index([consultationId])
+  @@index([pharmacistId])
+  @@map("consultation_reviews")
+}
+
+/// Append-only AI behaviour log (§29). One row per pipeline stage so the
+/// pharmacy can audit *why* the engine did what it did.
+model ConsultationAuditEntry {
+  id             String   @id @default(cuid())
+  consultationId String
+  stage          String // red_flag_screening, triage, contraindication, ...
+  summary        String
+  payload        Json?
+  aiModel        String?
+  promptVersion  String?
+  rulesVersion   String?
+  latencyMs      Int?
+  actorId        String?
+  actorLabel     String?
+  createdAt      DateTime @default(now())
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  @@index([consultationId])
+  @@index([stage])
+  @@index([createdAt])
+  @@map("consultation_audit_entries")
+}
+
+// ───────────────────── verified knowledge base (§24) ──────────────────────
+
+/// Provenance record for every clinical statement the system can make.
+model KnowledgeSource {
+  id           String              @id @default(cuid())
+  key          String              @unique
+  sourceType   KnowledgeSourceType
+  title        String
+  reference    String? // insert code, protocol number, database release
+  version      String
+  /// Full text or excerpt, when the pharmacy stores the wording itself.
+  body         String?
+  locale       Locale?
+  productId    String?
+  approvedBy   String? // pharmacist name / licence
+  approvedById String?
+  approvedAt   DateTime?
+  isActive     Boolean             @default(true)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  guidelines        OtcGuideline[]
+  contraindications ContraindicationRule[]
+  interactions      InteractionRule[]
+  safetyChecks      ConsultationSafetyCheck[]
+  recommendations   ConsultationRecommendation[]
+
+  @@index([sourceType])
+  @@index([isActive])
+  @@map("knowledge_sources")
+}
+
+/// Canonical active ingredient. Duplicate-ingredient detection (§18),
+/// contraindications (§16) and interactions (§17) all key off `key`.
+model ActiveIngredient {
+  id        String   @id @default(cuid())
+  key       String   @unique // paracetamol, ibuprofen, ...
+  name      String
+  nameMn    String
+  nameRu    String?
+  /// Therapeutic class, used to widen an allergy to its cross-reacting family.
+  className String?
+  classKey  String?
+  isOtc     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  aliases           MedicationAlias[]
+  products          ProductIngredient[]
+  contraindications ContraindicationRule[]
+  interactionsA     InteractionRule[]      @relation("interactionA")
+  interactionsB     InteractionRule[]      @relation("interactionB")
+
+  @@index([classKey])
+  @@map("active_ingredients")
+}
+
+/// Brand and colloquial names that resolve to an ingredient. An unmatched name
+/// is never guessed at — it becomes an UNKNOWN interaction verdict.
+model MedicationAlias {
+  id            String   @id @default(cuid())
+  alias         String   @unique // lowercase, punctuation stripped
+  ingredientKey String
+  locale        Locale?
+  createdAt     DateTime @default(now())
+
+  ingredient ActiveIngredient @relation(fields: [ingredientKey], references: [key], onDelete: Cascade)
+
+  @@index([ingredientKey])
+  @@map("medication_aliases")
+}
+
+/// Which active ingredients a catalogue product actually contains.
+model ProductIngredient {
+  id            String  @id @default(cuid())
+  productId     String
+  ingredientKey String
+  strengthMg    Int?
+  strengthLabel String?
+  isPrimary     Boolean @default(true)
+
+  product    Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ingredient ActiveIngredient @relation(fields: [ingredientKey], references: [key], onDelete: Cascade)
+
+  @@unique([productId, ingredientKey])
+  @@index([ingredientKey])
+  @@map("product_ingredients")
+}
+
+/// Pharmacist-approved self-care guideline for one symptom. This is the only
+/// thing that may open the door to an OTC suggestion.
+model OtcGuideline {
+  id                       String   @id @default(cuid())
+  symptomCode              String
+  key                      String   @unique
+  title                    String
+  /// Product categories that may be offered for this symptom.
+  categorySlugs            String[] @default([])
+  /// Active ingredients that may be offered for this symptom.
+  ingredientKeys           String[] @default([])
+  /// Self-care is inappropriate below this age; the engine escalates instead.
+  minAgeYears              Int?
+  /// Beyond this many days the complaint stops being a self-care case (§11).
+  maxSelfCareDays          Int      @default(7)
+  /// Why the category may be relevant, shown verbatim to the customer.
+  rationaleMn              String
+  rationaleEn              String
+  rationaleRu              String
+  precautionMn             String?
+  precautionEn             String?
+  precautionRu             String?
+  /// Pregnancy / breastfeeding always routes to a pharmacist for this symptom.
+  pregnancyNeedsPharmacist Boolean  @default(true)
+  isActive                 Boolean  @default(true)
+  sourceId                 String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  source          KnowledgeSource?             @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  recommendations ConsultationRecommendation[]
+
+  @@index([symptomCode])
+  @@index([isActive])
+  @@map("otc_guidelines")
+}
+
+/// One contraindication for one ingredient. `scope` selects which customer
+/// attribute it is matched against.
+model ContraindicationRule {
+  id            String                @id @default(cuid())
+  ingredientKey String
+  scope         ContraindicationScope
+  severity      RuleSeverity          @default(BLOCK)
+  /// Condition code for scope=CONDITION, ingredient class for scope=ALLERGY.
+  conditionCode String?
+  minAgeYears   Int?
+  minAgeMonths  Int?
+  maxAgeYears   Int?
+  messageMn     String
+  messageEn     String
+  messageRu     String
+  isActive      Boolean               @default(true)
+  sourceId      String?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  ingredient ActiveIngredient @relation(fields: [ingredientKey], references: [key], onDelete: Cascade)
+  source     KnowledgeSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([ingredientKey])
+  @@index([scope])
+  @@index([isActive])
+  @@map("contraindication_rules")
+}
+
+/// Verified pairwise interaction. Keys are stored sorted so a pair is unique
+/// regardless of the order it is queried in.
+model InteractionRule {
+  id             String            @id @default(cuid())
+  ingredientKeyA String
+  ingredientKeyB String
+  status         InteractionStatus
+  adviceMn       String
+  adviceEn       String
+  adviceRu       String
+  isActive       Boolean           @default(true)
+  sourceId       String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  ingredientA ActiveIngredient @relation("interactionA", fields: [ingredientKeyA], references: [key], onDelete: Cascade)
+  ingredientB ActiveIngredient @relation("interactionB", fields: [ingredientKeyB], references: [key], onDelete: Cascade)
+  source      KnowledgeSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@unique([ingredientKeyA, ingredientKeyB])
+  @@index([ingredientKeyA])
+  @@index([ingredientKeyB])
+  @@map("interaction_rules")
+}
