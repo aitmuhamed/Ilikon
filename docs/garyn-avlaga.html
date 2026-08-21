@@ -1,0 +1,1124 @@
+<title>Иликон Ажиллагааны Гарын Авлага</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+  /* ─────────────────────────── tokens: light ─────────────────────────── */
+  :root {
+    --ground:        #fbfcfb;
+    --surface:       #ffffff;
+    --surface-sunk:  #f3f6f4;
+    --line:          #dfe6e1;
+    --line-strong:   #c6d1ca;
+
+    --ink:           #1a2028;
+    --ink-soft:      #4d586a;
+    --ink-faint:     #78859a;
+
+    --brand:         #116646;
+    --brand-bright:  #158055;
+    --brand-tint:    #eaf6ef;
+
+    --danger:        #a81f27;
+    --danger-tint:   #fdeeee;
+    --caution:       #8a5406;
+    --caution-tint:  #fdf3e3;
+    --info:          #1d61d8;
+    --info-tint:     #eaf2fe;
+
+    --code-ground:   #131b17;
+    --code-ink:      #dfe9e2;
+    --code-line:     #2a3833;
+
+    --measure: 68ch;
+    --radius: 5px;
+  }
+
+  /* system dark (no explicit choice stamped) */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:        #0d1512;
+      --surface:       #141d19;
+      --surface-sunk:  #101815;
+      --line:          #253129;
+      --line-strong:   #35443b;
+
+      --ink:           #e4ebe6;
+      --ink-soft:      #a7b5ac;
+      --ink-faint:     #7c8b83;
+
+      --brand:         #58cc94;
+      --brand-bright:  #7dd8ab;
+      --brand-tint:    #10251c;
+
+      --danger:        #f08a8a;
+      --danger-tint:   #2a1516;
+      --caution:       #e0ac5a;
+      --caution-tint:  #271c0d;
+      --info:          #8fbdfb;
+      --info-tint:     #111d2e;
+
+      --code-ground:   #0a1210;
+      --code-ink:      #d6e3db;
+      --code-line:     #1e2a24;
+    }
+  }
+
+  /* explicit dark choice */
+  :root[data-theme="dark"] {
+    --ground:        #0d1512;
+    --surface:       #141d19;
+    --surface-sunk:  #101815;
+    --line:          #253129;
+    --line-strong:   #35443b;
+
+    --ink:           #e4ebe6;
+    --ink-soft:      #a7b5ac;
+    --ink-faint:     #7c8b83;
+
+    --brand:         #58cc94;
+    --brand-bright:  #7dd8ab;
+    --brand-tint:    #10251c;
+
+    --danger:        #f08a8a;
+    --danger-tint:   #2a1516;
+    --caution:       #e0ac5a;
+    --caution-tint:  #271c0d;
+    --info:          #8fbdfb;
+    --info-tint:     #111d2e;
+
+    --code-ground:   #0a1210;
+    --code-ink:      #d6e3db;
+    --code-line:     #1e2a24;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: 'Golos Text', 'Segoe UI', system-ui, sans-serif;
+    font-size: 16.5px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ───────────────────────────── shell ───────────────────────────────── */
+  .shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-width: 1220px;
+    margin: 0 auto;
+    padding: 0 20px 96px;
+  }
+  @media (min-width: 1040px) {
+    .shell {
+      grid-template-columns: 236px minmax(0, 1fr);
+      gap: 56px;
+      padding: 0 32px 120px;
+    }
+  }
+
+  /* ───────────────────────────── masthead ────────────────────────────── */
+  .masthead {
+    grid-column: 1 / -1;
+    padding: 56px 0 40px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 44px;
+  }
+  .crest {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 26px;
+  }
+  .crest-mark {
+    width: 34px; height: 34px;
+    display: grid; place-items: center;
+    background: var(--brand);
+    color: #fff;
+    border-radius: 4px;
+    flex: none;
+  }
+  .crest-name {
+    font-family: 'Bitter', Georgia, serif;
+    font-weight: 700;
+    font-size: 1.02rem;
+    letter-spacing: -0.01em;
+  }
+  .crest-sub {
+    display: block;
+    font-family: 'Golos Text', sans-serif;
+    font-weight: 500;
+    font-size: 0.63rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-faint);
+  }
+  h1 {
+    font-family: 'Bitter', Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(2rem, 5.4vw, 3.15rem);
+    line-height: 1.06;
+    letter-spacing: -0.025em;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 1.09rem;
+    color: var(--ink-soft);
+    max-width: 60ch;
+    margin: 0 0 26px;
+  }
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.73rem;
+    color: var(--ink-faint);
+  }
+  .meta-row b { color: var(--ink-soft); font-weight: 600; }
+
+  /* ───────────────────────────── contents ────────────────────────────── */
+  .contents { display: none; }
+  @media (min-width: 1040px) {
+    .contents {
+      display: block;
+      position: sticky;
+      top: 28px;
+      align-self: start;
+      max-height: calc(100vh - 56px);
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+  }
+  .contents-label {
+    font-size: 0.63rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-faint);
+    margin: 0 0 14px;
+  }
+  .contents ol { list-style: none; margin: 0; padding: 0; }
+  .contents li { margin-bottom: 1px; }
+  .contents a {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 4px;
+    padding: 5px 7px;
+    border-radius: 4px;
+    font-size: 0.845rem;
+    color: var(--ink-soft);
+    text-decoration: none;
+    line-height: 1.35;
+  }
+  .contents a:hover { background: var(--surface-sunk); color: var(--brand); }
+  .contents a:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+  .contents .n {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    padding-top: 2px;
+  }
+
+  /* ───────────────────────────── sections ────────────────────────────── */
+  main { min-width: 0; }
+  section { margin-bottom: 60px; scroll-margin-top: 20px; }
+  section > :last-child { margin-bottom: 0; }
+
+  h2 {
+    font-family: 'Bitter', Georgia, serif;
+    font-weight: 700;
+    font-size: 1.58rem;
+    line-height: 1.2;
+    letter-spacing: -0.018em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 13px;
+    align-items: baseline;
+  }
+  h2 .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--brand);
+    letter-spacing: 0;
+  }
+  .section-note {
+    color: var(--ink-faint);
+    font-size: 0.92rem;
+    margin: 0 0 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  h3 {
+    font-family: 'Golos Text', sans-serif;
+    font-weight: 600;
+    font-size: 1.03rem;
+    letter-spacing: -0.005em;
+    margin: 30px 0 9px;
+  }
+  h3:first-of-type { margin-top: 0; }
+
+  p { margin: 0 0 14px; max-width: var(--measure); }
+  a { color: var(--brand-bright); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 2px; }
+
+  ul, ol.steps { max-width: var(--measure); padding-left: 20px; margin: 0 0 14px; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 600; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.845em;
+    background: var(--surface-sunk);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.08em 0.34em;
+    white-space: nowrap;
+  }
+
+  pre {
+    background: var(--code-ground);
+    color: var(--code-ink);
+    border: 1px solid var(--code-line);
+    border-radius: var(--radius);
+    padding: 15px 17px;
+    overflow-x: auto;
+    margin: 0 0 18px;
+    font-size: 0.82rem;
+    line-height: 1.62;
+  }
+  pre code {
+    background: none; border: none; padding: 0;
+    font-size: 1em; color: inherit; white-space: pre;
+  }
+  pre .c { color: #7fa892; }
+  pre .p { color: #8fc9ab; font-weight: 600; }
+
+  /* ───────────────────────────── callouts ────────────────────────────── */
+  .note {
+    background: var(--surface-sunk);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 15px 17px;
+    margin: 0 0 18px;
+    max-width: var(--measure);
+  }
+  .note > :last-child { margin-bottom: 0; }
+  .note-tag {
+    display: block;
+    font-size: 0.63rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+  }
+  .note.critical { background: var(--danger-tint); border-color: color-mix(in srgb, var(--danger) 32%, transparent); }
+  .note.critical .note-tag { color: var(--danger); }
+  .note.warn { background: var(--caution-tint); border-color: color-mix(in srgb, var(--caution) 32%, transparent); }
+  .note.warn .note-tag { color: var(--caution); }
+  .note.tip { background: var(--info-tint); border-color: color-mix(in srgb, var(--info) 30%, transparent); }
+  .note.tip .note-tag { color: var(--info); }
+  .note.good { background: var(--brand-tint); border-color: color-mix(in srgb, var(--brand) 30%, transparent); }
+  .note.good .note-tag { color: var(--brand); }
+
+  /* ───────────────────────────── tables ─────────────────────────────── */
+  .table-wrap { overflow-x: auto; margin: 0 0 18px; border: 1px solid var(--line); border-radius: var(--radius); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.875rem; background: var(--surface); }
+  th, td { text-align: left; padding: 9px 13px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th {
+    background: var(--surface-sunk);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num, th.num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; text-align: right; }
+  td code { white-space: nowrap; }
+
+  /* ─────────────────────────── triage chips ─────────────────────────── */
+  .lvl {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .lvl-1 { background: var(--danger-tint); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 34%, transparent); }
+  .lvl-2 { background: var(--caution-tint); color: var(--caution); border: 1px solid color-mix(in srgb, var(--caution) 34%, transparent); }
+  .lvl-3 { background: var(--info-tint); color: var(--info); border: 1px solid color-mix(in srgb, var(--info) 32%, transparent); }
+  .lvl-4 { background: var(--brand-tint); color: var(--brand); border: 1px solid color-mix(in srgb, var(--brand) 32%, transparent); }
+
+  /* ────────────────────────── fault entries ─────────────────────────── */
+  .fault {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    padding: 15px 17px;
+    margin: 0 0 12px;
+    max-width: var(--measure);
+  }
+  .fault-sym {
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .fault-sym::before {
+    content: 'ШИНЖ';
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    margin-bottom: 3px;
+  }
+  .fault-why { color: var(--ink-soft); font-size: 0.93rem; margin: 0 0 10px; }
+  .fault pre { margin-bottom: 0; }
+  .fault > :last-child { margin-bottom: 0; }
+
+  footer {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--line);
+    padding-top: 22px;
+    color: var(--ink-faint);
+    font-size: 0.845rem;
+  }
+  footer p { max-width: var(--measure); }
+
+
+  /* ───────────────────────── хэвлэх / PDF ───────────────────────────── */
+  @media print {
+    /* Force the light palette: the dark theme burns ink and reads badly on
+       paper, and a viewer printing from a dark OS would otherwise get it. */
+    :root, :root[data-theme="dark"], :root:not([data-theme="light"]) {
+      --ground:       #ffffff;
+      --surface:      #ffffff;
+      --surface-sunk: #f4f6f5;
+      --line:         #ccd5cf;
+      --line-strong:  #aab6af;
+      --ink:          #101418;
+      --ink-soft:     #3c4552;
+      --ink-faint:    #5e6a78;
+      --brand:        #0d5138;
+      --brand-bright: #0d5138;
+      --brand-tint:   #eef7f2;
+      --danger:       #8d1c22;
+      --danger-tint:  #fdf0f0;
+      --caution:      #6f4405;
+      --caution-tint: #fdf6ea;
+      --info:         #17489c;
+      --info-tint:    #eef4fd;
+      --code-ground:  #f6f8f7;
+      --code-ink:     #16201b;
+      --code-line:    #c8d4cd;
+    }
+
+    @page {
+      size: A4;
+      margin: 16mm 15mm 18mm;
+    }
+
+    body {
+      background: #fff;
+      font-size: 10.2pt;
+      line-height: 1.5;
+    }
+
+    /* One column: the sticky rail is navigation, useless on paper. */
+    .contents { display: none !important; }
+    .shell {
+      display: block;
+      max-width: none;
+      padding: 0;
+    }
+    main { display: block; }
+
+    /* Title page, then each section starts fresh. */
+    .masthead {
+      padding: 0 0 12mm;
+      margin-bottom: 0;
+      border-bottom: 1.5pt solid var(--ink);
+      break-after: page;
+    }
+    h1 { font-size: 30pt; }
+    .standfirst { font-size: 12pt; max-width: none; }
+
+    section {
+      break-before: page;
+      margin-bottom: 0;
+    }
+    section:first-of-type { break-before: avoid; }
+
+    /* Never orphan a heading from what it introduces. */
+    h2, h3 { break-after: avoid; break-inside: avoid; }
+    h2 { font-size: 16pt; margin-bottom: 4pt; }
+    h3 { font-size: 11.4pt; margin: 14pt 0 4pt; }
+    p, li { orphans: 3; widows: 3; }
+    p, ul, ol { max-width: none; }
+
+    /* Keep a callout, a table row group or a fault entry on one page. */
+    .note, .fault, .table-wrap, pre, tr { break-inside: avoid; }
+    thead { display: table-header-group; }
+
+    pre {
+      background: var(--code-ground);
+      color: var(--code-ink);
+      border: 0.5pt solid var(--code-line);
+      font-size: 8.6pt;
+      white-space: pre-wrap;      /* no clipped commands on paper */
+      word-break: break-word;
+    }
+    pre .c { color: #4a6b57; }
+    pre .p { color: #0d5138; }
+
+    code {
+      background: var(--surface-sunk);
+      border: 0.4pt solid var(--line);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    table { font-size: 9pt; }
+    th, td { padding: 4pt 6pt; }
+    .table-wrap { overflow: visible; border: 0.5pt solid var(--line-strong); }
+
+    .note, .fault { border-width: 0.5pt; }
+
+    /* Print the destination of internal cross-references, which are dead links
+       on paper otherwise. */
+    a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    a[href^="#"]::after { content: " (" attr(href) " хэсэг)"; font-weight: 400; font-size: 0.85em; color: var(--ink-faint); }
+    a[href^="http"]::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 0.8em; color: var(--ink-faint); word-break: break-all; }
+
+    footer { break-inside: avoid; border-top: 0.5pt solid var(--line); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="shell">
+
+  <header class="masthead">
+    <span class="crest">
+      <span class="crest-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7V3z"/></svg>
+      </span>
+      <span class="crest-name">Иликон
+        <span class="crest-sub">Уужим Эмийн Сан</span>
+      </span>
+    </span>
+
+    <h1>Ажиллагааны гарын авлага</h1>
+    <p class="standfirst">
+      Онлайн эмийн сангийн систем, ажилтны хяналтын самбар, AI эрүүл мэндийн
+      зөвлөгөө — тохируулахаас өдөр тутмын ажиллагаа, хостинг, асуудал
+      шийдвэрлэх хүртэл бүх тохиолдол.
+    </p>
+    <div class="meta-row">
+      <span><b>Хувилбар</b> 2026.08</span>
+      <span><b>Систем</b> Next.js 15 · PostgreSQL · Prisma</span>
+      <span><b>Хэл</b> Монгол · English · Русский</span>
+    </div>
+  </header>
+
+  <nav class="contents" aria-label="Агуулга">
+    <p class="contents-label">Агуулга</p>
+    <ol>
+      <li><a href="#s1"><span class="n">01</span><span>Систем ямар зарчмаар ажилладаг</span></a></li>
+      <li><a href="#s2"><span class="n">02</span><span>Эхлүүлэх</span></a></li>
+      <li><a href="#s3"><span class="n">03</span><span>Дүр, эрх, нэвтрэлт</span></a></li>
+      <li><a href="#s4"><span class="n">04</span><span>Дэлгүүр — харилцагчийн урсгал</span></a></li>
+      <li><a href="#s5"><span class="n">05</span><span>Админ — бүх цэс</span></a></li>
+      <li><a href="#s6"><span class="n">06</span><span>Жор баталгаажуулах</span></a></li>
+      <li><a href="#s7"><span class="n">07</span><span>AI зөвлөгөө — эм зүйчид</span></a></li>
+      <li><a href="#s8"><span class="n">08</span><span>Өгөгдлийн сан</span></a></li>
+      <li><a href="#s9"><span class="n">09</span><span>Тохиргоо</span></a></li>
+      <li><a href="#s10"><span class="n">10</span><span>Нууц үг, аюулгүй байдал</span></a></li>
+      <li><a href="#s11"><span class="n">11</span><span>Хостинг</span></a></li>
+      <li><a href="#s12"><span class="n">12</span><span>Тест шалгалт</span></a></li>
+      <li><a href="#s13"><span class="n">13</span><span>Өгөгдөл хамгаалах</span></a></li>
+      <li><a href="#s14"><span class="n">14</span><span>Асуудал шийдвэрлэх</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ───────────────────────────── 01 ───────────────────────────── -->
+    <section id="s1">
+      <h2><span class="num">01</span><span>Систем ямар зарчмаар ажилладаг</span></h2>
+      <p class="section-note">Бүх зүйл нэг дүрмийн дор.</p>
+
+      <div class="note critical">
+        <span class="note-tag">Гол дүрэм</span>
+        <p>Жороор олгох эмийг <strong>лицензтэй эм зүйч баталгаажуулаагүй</strong>
+        бол хэзээ ч олгохгүй. Энэ нь зөвхөн текст биш — кодод хэрэгжсэн: жор
+        шаардсан захиалга «Бэлтгэж байна» төлөвт хүрч чадахгүй.</p>
+      </div>
+
+      <p>Систем гурван хэсэгтэй:</p>
+      <ul>
+        <li><strong>Дэлгүүр</strong> — харилцагч эм хайж, захиалж, жор хуулна. Гурван хэлээр, анхдагч нь монгол.</li>
+        <li><strong>Админ</strong> — ажилтны хяналтын самбар. Дүр тус бүр өөрийн эрхийн хүрээнд л хардаг.</li>
+        <li><strong>AI зөвлөгөө</strong> — зовиурыг асуулгаар тодруулж, эрсдэлийг шалгаж, зөвхөн зохимжтой үед жоргүй бүтээгдэхүүн санал болгоно.</li>
+      </ul>
+
+      <h3>Захиалгын гинжин хэлхээ</h3>
+      <p>Админ бүтээгдэхүүн үүсгэнэ → дэлгүүрт харагдана → харилцагч захиална →
+      нөөц дэвтрээр хасагдана → админд захиалга гарна → төлбөр шинэчлэгдэнэ →
+      жор шаардсан бол эм зүйч баталгаажуулна → хүргэлт хөдөлнө → харилцагч
+      алхам бүрт мэдэгдэл авна.</p>
+    </section>
+
+    <!-- ───────────────────────────── 02 ───────────────────────────── -->
+    <section id="s2">
+      <h2><span class="num">02</span><span>Эхлүүлэх</span></h2>
+      <p class="section-note">Шинэ компьютер дээр эхнээс.</p>
+
+      <pre><code><span class="c"># 1. Кодыг татах</span>
+git clone https://github.com/aitmuhamed/Ilikon.git
+cd Ilikon
+
+<span class="c"># 2. Өгөгдлийн сан (Docker)</span>
+docker compose up -d db
+
+<span class="c"># 3. Тохиргоо</span>
+cp .env.example .env
+<span class="c">#   → AUTH_SECRET-ийг шинээр үүсгэ: openssl rand -base64 48</span>
+<span class="c">#   → DATABASE_URL-ын порт 5439 байгааг шалга</span>
+
+<span class="c"># 4. Хамаарал, миграц, өгөгдөл</span>
+npm install
+npm run setup
+
+<span class="c"># 5. Ажиллуулах</span>
+npm run dev</code></pre>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Хаяг</th><th>Хаана</th></tr></thead>
+          <tbody>
+            <tr><td>Дэлгүүр</td><td><code>http://localhost:3000/mn</code></td></tr>
+            <tr><td>English / Русский</td><td><code>/en</code> · <code>/ru</code></td></tr>
+            <tr><td>Админ</td><td><code>http://localhost:3000/admin</code></td></tr>
+            <tr><td>AI зөвлөгөө</td><td><code>/mn/consultation</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note warn">
+        <span class="note-tag">Анхаар</span>
+        <p><code>npm run setup</code> нь demo өгөгдөл нэмнэ — бүх ажилтны данс
+        <em>ижил, нийтэд мэдэгдсэн</em> нууц үгтэй байна. Интернэтэд гаргахаас
+        өмнө <a href="#s10">10-р хэсгийг</a> үзнэ үү.</p>
+      </div>
+    </section>
+
+    <!-- ───────────────────────────── 03 ───────────────────────────── -->
+    <section id="s3">
+      <h2><span class="num">03</span><span>Дүр, эрх, нэвтрэлт</span></h2>
+      <p class="section-note">Хэн юу хийж чадах вэ.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Дүр</th><th>Нэвтрэх</th><th class="num">Эрх</th><th>Онцлог</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Супер админ</strong></td><td><code>admin@ilikon.mn</code></td><td class="num">47</td><td>Бүх зүйл. Аюулгүй байдлын дүрмийг зөвхөн энэ дүр өөрчилнө.</td></tr>
+            <tr><td>Админ</td><td><code>manager@ilikon.mn</code></td><td class="num">38</td><td>Бүтээгдэхүүн, захиалга, тайлан. Жор баталгаажуулж <em>чадахгүй</em>.</td></tr>
+            <tr><td><strong>Эм зүйч</strong></td><td><code>pharmacist@ilikon.mn</code></td><td class="num">21</td><td>Жор баталгаажуулах, AI зөвлөгөө хянах — зөвхөн энэ дүр.</td></tr>
+            <tr><td>Захиалгын менежер</td><td><code>orders@ilikon.mn</code></td><td class="num">17</td><td>Захиалга, хүргэлт, төлбөр.</td></tr>
+            <tr><td>Нөөцийн менежер</td><td><code>inventory@ilikon.mn</code></td><td class="num">12</td><td>Нөөц, сери, хугацаа.</td></tr>
+            <tr><td>Хүргэлтийн ажилтан</td><td><code>delivery@ilikon.mn</code></td><td class="num">4</td><td>Зөвхөн өөрт хуваарилагдсан хүргэлт.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Эрх нь <strong>хүсэлт бүрт өгөгдлийн сангаас</strong> уншигддаг —
+      дүрийг хассан бол тэр даруй хүчинтэй болно, дараа нэвтрэх хүртэл
+      хүлээхгүй. Хажуугийн цэс эрхээр шүүгддэг: хүргэлтийн ажилтан бүтээгдэхүүний
+      цэсийг харахгүй ч биш, API нь бас тусдаа шалгадаг.</p>
+
+      <div class="note tip">
+        <span class="note-tag">Дүр өөрчлөх</span>
+        <p><strong>Админ → Дүр ба эрх</strong> дээрээс дүр тус бүрийн эрхийг
+        харж, засна. Ажилтан нэмэх нь <strong>Админ → Ажилтан</strong>.
+        Ажилтныг устгадаггүй — <em>хаадаг</em>, учир нь тэд аудитын бичлэг эзэмшдэг.</p>
+      </div>
+    </section>
+
+    <!-- ───────────────────────────── 04 ───────────────────────────── -->
+    <section id="s4">
+      <h2><span class="num">04</span><span>Дэлгүүр — харилцагчийн урсгал</span></h2>
+      <p class="section-note">Харилцагч юу хийж чадах вэ.</p>
+
+      <ul>
+        <li><strong>Хайх</strong> — нэр, брэнд, үйлчлэгч бодис, SKU, баркодоор. Категори, үнэ, нөөц, жортой/жоргүй, хямдрал, үнэлгээгээр шүүнэ.</li>
+        <li><strong>Бүтээгдэхүүний хуудас</strong> — тун, анхааруулга, хажуугийн үйлдэл, хадгалалт, найрлага. Гурван хэлээр.</li>
+        <li><strong>Сагс, төлбөр</strong> — нөөцийг сервер дээр шалгана. Гурван алхамт төлбөр.</li>
+        <li><strong>Жор хуулах</strong> — <code>/mn/prescriptions/upload</code>. Зураг эсвэл PDF.</li>
+        <li><strong>Хувийн хаяг</strong> — захиалгын түүх, дахин захиалах, хаяг, хүслийн жагсаалт, мэдэгдэл, <strong>AI зөвлөгөөний түүх</strong>.</li>
+      </ul>
+
+      <div class="note good">
+        <span class="note-tag">Хэл</span>
+        <p>Анхдагч нь <strong>монгол</strong>. Хэрэглэгч хэлээ сонгох хүртэл
+        хөтчийн хэлээс үл хамааран монголоор нээгдэнэ. Сонголт cookie-д
+        хадгалагдана.</p>
+      </div>
+    </section>
+
+    <!-- ───────────────────────────── 05 ───────────────────────────── -->
+    <section id="s5">
+      <h2><span class="num">05</span><span>Админ — бүх цэс</span></h2>
+      <p class="section-note">Цэс бүр юу хийдэг.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Цэс</th><th>Хийдэг зүйл</th><th>Шаардах эрх</th></tr></thead>
+          <tbody>
+            <tr><td>Хяналтын самбар</td><td>Борлуулалт, захиалга, харилцагч, сануулга, 6 төрлийн график</td><td><code>dashboard.view</code></td></tr>
+            <tr><td>Захиалга</td><td>Түүх, төлөв, дотоод тэмдэглэл, хүргэгч хуваарилах, төлбөрийн хуудас хэвлэх</td><td><code>orders.view</code></td></tr>
+            <tr><td><strong>Жор</strong></td><td>Баталгаажуулах дараалал. <a href="#s6">6-р хэсэг</a></td><td><code>prescriptions.verify</code></td></tr>
+            <tr><td>Хүргэлт</td><td>Хүргэлтийн самбар, хүргэгч, төлөв</td><td><code>delivery.view</code></td></tr>
+            <tr><td>Төлбөр</td><td>Төлбөрийн төлөв шинэчлэх</td><td><code>payments.view</code></td></tr>
+            <tr><td>Бүтээгдэхүүн</td><td>5 табтай бүрэн CRUD, хэл тус бүрийн эмийн мэдээлэл</td><td><code>products.view</code></td></tr>
+            <tr><td>Категори / Брэнд</td><td>Мод хэлбэрийн категори, брэнд удирдах</td><td><code>categories.view</code></td></tr>
+            <tr><td>Бараа материал</td><td>Тэмдэгтэй дэвтэр, сери, нөөц багатай, хугацаа дуусах</td><td><code>inventory.view</code></td></tr>
+            <tr><td>Харилцагч</td><td>Данс, холбоо барих (эрхгүй бол нуугдана)</td><td><code>customers.view</code></td></tr>
+            <tr><td>Үнэлгээ</td><td>Санал хүсэлт хянах</td><td><code>reviews.view</code></td></tr>
+            <tr><td>Чатбот</td><td>Харилцааны түүх</td><td><code>chatbot.view</code></td></tr>
+            <tr><td><strong>AI зөвлөгөө</strong></td><td>Дүн шинжилгээ, бүртгэл, эм зүйчийн хяналт. <a href="#s7">7-р хэсэг</a></td><td><code>consultations.view</code></td></tr>
+            <tr><td>Мэдэгдэл</td><td>Харилцагч эсвэл ажилтанд мэдэгдэл</td><td><code>notifications.view</code></td></tr>
+            <tr><td>Купон / Урамшуулал</td><td>Хямдралын код, баннер</td><td><code>coupons.view</code></td></tr>
+            <tr><td>Тайлан</td><td>Дүн шинжилгээ, CSV татах</td><td><code>reports.view</code></td></tr>
+            <tr><td>Ажилтан / Дүр</td><td>Данс, дүр, эрх</td><td><code>staff.view</code></td></tr>
+            <tr><td>Тохиргоо</td><td><a href="#s9">9-р хэсэг</a></td><td><code>settings.view</code></td></tr>
+            <tr><td>Аудит лог</td><td>Бүх эрхтэй үйлдлийн бүртгэл</td><td><code>audit.view</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note tip">
+        <span class="note-tag">Гар утсан дээр</span>
+        <p>Зүүн доод талын <strong>цэсний товч</strong> дарж хажуугийн цэсийг
+        нээнэ. Логон дарвал хяналтын самбар руу шилжинэ. Хүснэгтүүд хэвтээ
+        гүйлгэнэ — хуудас өөрөө хажуу тийш гүйхгүй.</p>
+      </div>
+    </section>
+
+    <!-- ───────────────────────────── 06 ───────────────────────────── -->
+    <section id="s6">
+      <h2><span class="num">06</span><span>Жор баталгаажуулах</span></h2>
+      <p class="section-note">Системийн хамгийн чухал ажил. Зөвхөн эм зүйч.</p>
+
+      <ol class="steps">
+        <li><strong>Админ → Жор</strong> нээх. Дараалалд хүлээгдэж байгаа болон тодруулга хүссэн жорууд байна.</li>
+        <li>Файлыг нээж уншина. <em>Унших бүрт аудитад бичигдэнэ</em> — хэн, хэзээ, хаанаас.</li>
+        <li>Шийдвэр гаргана: <strong>Батлах</strong> · <strong>Татгалзах</strong> · <strong>Тодруулга хүсэх</strong>.</li>
+        <li>Шалтгаан, тэмдэглэл бичнэ. Энэ нь харилцагчид мэдэгдэл болж очно.</li>
+      </ol>
+
+      <div class="note critical">
+        <span class="note-tag">Хэрэгжсэн хамгаалалт</span>
+        <ul>
+          <li>Жор шаардсан захиалга баталгаажаагүй бол <strong>Бэлтгэж байна / Хүргэлтэнд / Хүлээн авсан</strong> төлөвт орохгүй.</li>
+          <li>Жор автоматаар <strong>батлагддаггүй</strong> — хянагчийг нэрлэсэн бичлэггүйгээр «Баталгаажсан» болох код байхгүй.</li>
+          <li>Файл нь нийтийн хаягаар <strong>хэзээ ч</strong> үйлчлэгддэггүй. Эрх шалгасны дараа л уншигдана, татгалзсан ч аудитад бичигдэнэ.</li>
+          <li>Хугацаа дууссан бараа зарагдахгүй — захиалгын гүйлгээ дотор дахин шалгагдана.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ───────────────────────────── 07 ───────────────────────────── -->
+    <section id="s7">
+      <h2><span class="num">07</span><span>AI зөвлөгөө — эм зүйчид</span></h2>
+      <p class="section-note">Триаж хэрэгсэл, эмч биш.</p>
+
+      <p>Харилцагч <strong>Иликон-той зөвлөлдөх</strong> нээж, тайлбарыг
+      зөвшөөрч, зохицуулагдсан асуулгад хариулна. Систем 4 түвшинд эрсдэлийг
+      үнэлж, зөвхөн зохимжтой үед <strong>эмийн сангийн өөрийн бүртгэлээс</strong>
+      жоргүй бүтээгдэхүүн санал болгоно.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Түвшин</th><th>Гарц</th><th>Бүтээгдэхүүн</th></tr></thead>
+          <tbody>
+            <tr><td><span class="lvl lvl-1">1 · ЯАРАЛТАЙ</span></td><td>Яаралтай тусламж авахыг зөвлөнө</td><td><strong>Хэзээ ч үгүй</strong></td></tr>
+            <tr><td><span class="lvl lvl-2">2 · ЭМЧИД</span></td><td>Өнөөдөр эмчид хандах</td><td>Үгүй</td></tr>
+            <tr><td><span class="lvl lvl-3">3 · ЭМ ЗҮЙЧ</span></td><td>Эм зүйч хянасны дараа</td><td>Хяналт хүлээж</td></tr>
+            <tr><td><span class="lvl lvl-4">4 · ӨӨРӨӨ</span></td><td>Өөрөө тусламжийн зөвлөгөө</td><td>Дээд тал 3</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Эм зүйчийн хяналт</h3>
+      <p><strong>Админ → AI зөвлөгөө</strong> дээрээс бүртгэлийг нээнэ. Ямар
+      асуулт асуусан, юу хариулсан, ямар эрсдэл илэрсэн, ямар бүтээгдэхүүн
+      <em>авч үзсэн</em> (зөвхөн харуулсан биш), аюулгүй байдлын шалгалт бүрийн
+      үр дүн, AI-ийн аудит лог — бүгд байна.</p>
+      <p>Дараа нь: <strong>Батлах · Зөвлөмж өөрчлөх · Татгалзах · Тэмдэглэл ·
+      Нэмэлт мэдээлэл хүсэх · Бүтээгдэхүүн санал болгох</strong>. Ангиллыг ч
+      өөрчилж болно.</p>
+
+      <div class="note good">
+        <span class="note-tag">Эрэмбэ</span>
+        <p><strong>Эм зүйч AI-г дийлнэ, AI эм зүйчийг хэзээ ч дийлэхгүй.</strong>
+        Хянасны дараа систем дахин үнэлгээ хийхээс татгалзана, эм зүйчийн нэмсэн
+        бүтээгдэхүүн бүх дахин үнэлгээнд хадгалагдана.</p>
+      </div>
+
+      <div class="note critical">
+        <span class="note-tag">Систем хийдэггүй зүйл</span>
+        <ul>
+          <li>Онош тавихгүй. Жороор олгох эм санал болгохгүй. <strong>Тун бичихгүй</strong>.</li>
+          <li>Харшил, жирэмсэн, нас, эмийн харилцан үйлчлэлийг үл хайхрахгүй.</li>
+          <li>Тодорхойгүй бол таамаглахгүй — эм зүйч рүү дамжуулна.</li>
+          <li>Яаралтай тохиолдолд бүтээгдэхүүн <strong>харуулахгүй</strong>.</li>
+        </ul>
+      </div>
+
+      <div class="note warn">
+        <span class="note-tag">Ашиглалтад гаргахаас өмнө</span>
+        <p>Мэдлэгийн сан (15 заавар, 33 хориглох дүрэм, 16 харилцан үйлчлэл) нь
+        <strong>demo агуулга</strong>. Бодит харилцагчид хүрэхээс өмнө эмийн
+        сангийн лицензтэй эм зүйч мөр бүрийг хянаж, дахин батлах ёстой.</p>
+      </div>
+    </section>
+
+    <!-- ───────────────────────────── 08 ───────────────────────────── -->
+    <section id="s8">
+      <h2><span class="num">08</span><span>Өгөгдлийн сан</span></h2>
+      <p class="section-note">DBeaver болон psql.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Талбар</th><th>Утга</th></tr></thead>
+          <tbody>
+            <tr><td>Host</td><td><code>localhost</code></td></tr>
+            <tr><td>Port</td><td><code>5439</code> — анхдагч 5432 <strong>биш</strong></td></tr>
+            <tr><td>Database</td><td><code>ilikon</code></td></tr>
+            <tr><td>User</td><td><code>ilikon</code></td></tr>
+            <tr><td>Password</td><td><code>ilikon_dev_password</code></td></tr>
+            <tr><td>Schema</td><td><code>public</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>DBeaver-т автоматаар нэмэх</h3>
+      <p><strong>DBeaver-ыг хаа</strong>, дараа нь:</p>
+      <pre><code>powershell -ExecutionPolicy Bypass -File scripts\dbeaver-connect.ps1</code></pre>
+      <p>Холболтыг <code>data-sources.json</code>-д нэмнэ (эхлээд нөөцөлнө).
+      Нууц үгийг бичихгүй — DBeaver нэг удаа асууж, өөрийн шифрлэгдсэн санд
+      хадгална.</p>
+
+      <div class="note warn">
+        <span class="note-tag">Яагаад хаах шаардлагатай</span>
+        <p>DBeaver гарахдаа <code>data-sources.json</code>-г дахин бичдэг —
+        нээлттэй байхад нэмсэн холболт дуугүй арчигдана. Скрипт үүнийг
+        мэддэг тул нээлттэй байвал ажиллахаас татгалзана.</p>
+      </div>
+
+      <h3>psql — тусад нь юу ч суулгахгүйгээр</h3>
+      <pre><code>docker exec -it ilikon-db psql -U ilikon -d ilikon</code></pre>
+      <p>Prisma-ийн визуал хэрэгсэл: <code>npm run prisma:studio</code></p>
+    </section>
+
+    <!-- ───────────────────────────── 09 ───────────────────────────── -->
+    <section id="s9">
+      <h2><span class="num">09</span><span>Тохиргоо</span></h2>
+      <p class="section-note">Кодгүйгээр өөрчлөх зүйлс.</p>
+
+      <p><strong>Админ → Тохиргоо</strong>: эмийн сангийн нэр, утас, хаяг,
+      Google Maps, лицензийн дугаар, ажиллах цаг, хүргэлтийн хураамж, үнэгүй
+      хүргэлтийн доод хэмжээ, төлбөрийн хэлбэрүүд, мэдэгдэл, SEO, нөөцийн
+      сануулгын босго.</p>
+
+      <h3>AI зөвлөгөөний тохиргоо</h3>
+      <p><strong>Админ → AI зөвлөгөө</strong> дотор. Хоёр эрхэд хуваагдана:</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Тохиргоо</th><th>Шаардах эрх</th></tr></thead>
+          <tbody>
+            <tr><td>Нээлттэй/хаалттай, хэл, бүтээгдэхүүний тоо, хадгалах хугацаа</td><td><code>consultations.configure</code></td></tr>
+            <tr><td><strong>Эм зүйчид дамжуулах босго, хориглосон бүтээгдэхүүн, системийн prompt, тайлбар, яаралтай дугаар</strong></td><td><code>consultations.safety</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note critical">
+        <span class="note-tag">Санамсаргүй биш</span>
+        <p>Аюулгүй байдлын дүрмийг зөвхөн <code>consultations.safety</code>
+        эрхтэй хүн өөрчилнө — анхдагчаар <strong>зөвхөн супер админ</strong>.
+        Эрхгүй хүн өөрчлөхийг оролдвол API нь <em>дуугүй хаяхгүй</em>, ил
+        татгалзана. Ерөнхий админд энэ эрхийг өгч болохгүй.</p>
+      </div>
+
+      <p>Яаралтай тусламжийн дугаар нь кодод бичигдээгүй — тохиргооноос
+      уншигдана, тиймээс улс/хот өөрчлөгдвөл кодыг хөндөхгүй.</p>
+    </section>
+
+    <!-- ───────────────────────────── 10 ───────────────────────────── -->
+    <section id="s10">
+      <h2><span class="num">10</span><span>Нууц үг, аюулгүй байдал</span></h2>
+      <p class="section-note">Интернэтэд гаргахаас өмнө.</p>
+
+      <div class="note critical">
+        <span class="note-tag">Хамгийн эхэнд</span>
+        <p>Demo нууц үг нь <strong>нийтийн GitHub</strong> дээр байдаг. Аппыг
+        интернэтэд гаргах бол хэн ч супер админаар нэвтэрч чадна. Нэн тэргүүнд
+        солино уу.</p>
+      </div>
+
+      <pre><code><span class="c"># Ажилтны данснууд</span>
+npm run rotate:passwords
+
+<span class="c"># Ажилтан + харилцагч</span>
+npm run rotate:passwords -- --customers</code></pre>
+
+      <p>Данс тус бүрт хүчтэй санамсаргүй нууц үг үүсгэж, <strong>нэг л удаа</strong>
+      харуулна. Хаана ч хадгалагдахгүй тул тэр дор нь password manager-т
+      хийнэ үү. <code>npm run db:seed</code> дахин ажиллуулсан ч буцаахгүй.</p>
+
+      <h3>Мөн заавал солих</h3>
+      <ul>
+        <li><code>AUTH_SECRET</code> — <code>openssl rand -base64 48</code></li>
+        <li><code>POSTGRES_PASSWORD</code> (<code>docker-compose.yml</code>) ба түүнд тохирсон <code>DATABASE_URL</code></li>
+        <li><code>NEXT_PUBLIC_SITE_URL</code> — бодит хаяг</li>
+      </ul>
+
+      <h3>Системд хэрэгжсэн хамгаалалт</h3>
+      <ul>
+        <li>bcrypt (12 давталт) · httpOnly, гарын үсэгтэй JWT · CSRF, origin шалгалт</li>
+        <li>Бүх endpoint-д Zod шалгалт, урт хязгаартай</li>
+        <li>Файл байтаас нь танигдана, зарласан төрлөөс нь биш</li>
+        <li>Аудит лог — эрхтэй үйлдэл, жор унших бүрт</li>
+        <li>CSP, HSTS, <code>X-Frame-Options</code>, <code>nosniff</code></li>
+        <li>Эрүүл мэндийн хариултыг эм зүйчээс бусад ажилтан харахгүй</li>
+      </ul>
+
+      <div class="note warn">
+        <span class="note-tag">Шалгасан, хүлээн зөвшөөрсөн</span>
+        <p>Хамаарлын сангуудад <strong>6 өндөр эрсдэлт сануулга</strong>
+        байгаа (<code>sharp</code>, <code>postcss</code> — Next.js-ээр дамжсан).
+        Арилгахад <code>next@16</code> том шинэчлэл хэрэгтэй, өөрийн
+        регрессийн шалгалттай. <code>npm audit</code>-аар харна.</p>
+      </div>
+    </section>
+
+    <!-- ───────────────────────────── 11 ───────────────────────────── -->
+    <section id="s11">
+      <h2><span class="num">11</span><span>Хостинг</span></h2>
+      <p class="section-note">Хэрэгцээнд тааруулж дөрвөн зам.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Арга</th><th>Данс</th><th>Домэйн</th><th>Тохиромжтой</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Quick Tunnel</strong></td><td>Хэрэггүй</td><td>Хэрэггүй</td><td>Демо, шуурхай линк. Хаяг тохиолдлын, дахин ачаалахад өөрчлөгдөнө.</td></tr>
+            <tr><td><strong>Cloudflare Tunnel</strong></td><td>Үнэгүй</td><td>Өөрийн</td><td>Тогтвортой хаяг, WAF. Порт нээхгүй. <em>Зөвлөж байна.</em></td></tr>
+            <tr><td>VPS + Cloudflare</td><td>Үнэгүй</td><td>Өөрийн</td><td>Уламжлалт, өөрийн серверт</td></tr>
+            <tr><td>Cloudflare Workers</td><td>Үнэгүй</td><td>Өөрийн</td><td>Edge. Удирдлагатай Postgres шаардана — <strong>жинхэнэ шилжилт</strong>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Quick Tunnel — данс, домэйн, төлбөргүй</h3>
+      <pre><code>NET=$(docker inspect ilikon-db --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}')
+
+docker run -d --name ilikon-app-live --network "$NET" \
+  -e DATABASE_URL="postgresql://ilikon:...@db:5432/ilikon?schema=public" \
+  -e AUTH_SECRET="$(openssl rand -base64 48)" \
+  -e STORAGE_DRIVER=local -e NODE_ENV=production \
+  ilikon-pharmacy-app:latest
+
+docker run -d --name ilikon-quick-tunnel --network "$NET" \
+  cloudflare/cloudflared:latest tunnel --no-autoupdate \
+  --url http://ilikon-app-live:3000
+
+docker logs ilikon-quick-tunnel 2>&1 | grep trycloudflare.com</code></pre>
+      <p>Зогсоох: <code>docker rm -f ilikon-quick-tunnel ilikon-app-live</code></p>
+
+      <h3>Нэртэй Tunnel — тогтвортой</h3>
+      <p>Cloudflare самбар → <strong>Zero Trust → Networks → Tunnels</strong> →
+      Cloudflared сонгож token хуулна. Дараа нь:</p>
+      <pre><code>echo 'CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoi...' &gt;&gt; .env
+echo 'NEXT_PUBLIC_SITE_URL=https://ilikon.domain.mn' &gt;&gt; .env
+docker compose --profile full --profile tunnel up -d --build</code></pre>
+      <p>Tunnel-ийн <em>Public Hostname</em> табт: <strong>Service = HTTP</strong>,
+      <strong>URL = <code>app:3000</code></strong>.</p>
+
+      <div class="note tip">
+        <span class="note-tag">Cloudflare самбарт</span>
+        <ul>
+          <li><strong>SSL/TLS</strong> → Full (strict)</li>
+          <li><strong>WAF</strong> → Managed Ruleset нээх</li>
+          <li><strong>Bots</strong> → Bot Fight Mode</li>
+          <li><strong>Rate limiting</strong> → <code>/api/auth/login</code>-д минутад ~10</li>
+          <li><strong>Caching</strong> → <code>/api/*</code>, <code>/admin/*</code> кэшлэхгүй. <code>/api/consultations/*</code> нь эрүүл мэндийн өгөгдөл — хэзээ ч кэшлэхгүй.</li>
+        </ul>
+      </div>
+
+      <div class="note warn">
+        <span class="note-tag">Порт 3000</span>
+        <p>Tunnel ашиглаж байгаа бол <code>app</code> сервисийн
+        <code>ports:</code> блокийг <strong>авах нь илүү зөв</strong> —
+        cloudflared дотоод сүлжээгээр очдог. Портыг гаргахгүй бол origin руу
+        шууд хандаж WAF-ыг тойрох боломжгүй болно.</p>
+      </div>
+    </section>
+
+    <!-- ───────────────────────────── 12 ───────────────────────────── -->
+    <section id="s12">
+      <h2><span class="num">12</span><span>Тест шалгалт</span></h2>
+      <p class="section-note">Юуг ямар үед ажиллуулах.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Команд</th><th>Шалгадаг зүйл</th><th>Сервер</th></tr></thead>
+          <tbody>
+            <tr><td><code>npm run typecheck</code></td><td>TypeScript</td><td>Хэрэггүй</td></tr>
+            <tr><td><code>npm run build</code></td><td>Production build</td><td>Хэрэггүй</td></tr>
+            <tr><td><code>npm run test:consultation</code></td><td>AI триажийн 10 хувилбар — яаралтай, харшил, жирэмсэн, харилцан үйлчлэл</td><td>Хэрэггүй</td></tr>
+            <tr><td><code>npm run test:e2e 3000</code></td><td>Гинжин хэлхээ, эрх, жорын хамгаалалт — 56 шалгалт</td><td>Хэрэгтэй</td></tr>
+            <tr><td><code>npm run test:consultation:e2e 3000</code></td><td>Зөвшөөрөл, cookie, хандалт, эм зүйчийн хяналт — 37 шалгалт</td><td>Хэрэгтэй</td></tr>
+            <tr><td><code>npm run responsive:audit 3000</code></td><td>29 хуудсын хэвтээ гүйлтийн эрсдэл</td><td>Хэрэгтэй</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note tip">
+        <span class="note-tag">Нууц үг сольсны дараа</span>
+        <pre style="margin-top:8px"><code>export TEST_PASSWORD='...'
+<span class="c"># эсвэл данс тус бүрт</span>
+export TEST_PASSWORD_MAP='{"admin@ilikon.mn":"...","orders@ilikon.mn":"..."}'
+npm run test:e2e 3000</code></pre>
+      </div>
+    </section>
+
+    <!-- ───────────────────────────── 13 ───────────────────────────── -->
+    <section id="s13">
+      <h2><span class="num">13</span><span>Өгөгдөл хамгаалах</span></h2>
+      <p class="section-note">Эрүүл мэндийн өгөгдөл — хамгийн мэдрэмтгий.</p>
+
+      <p>AI зөвлөгөөний хариултууд нь эрүүл мэндийн өгөгдөл. Хадгалах хугацаа
+      (анхдагч <strong>365 хоног</strong>) дуусахад чөлөөт текст, хариулт, эмийн
+      болон харшлын жагсаалт <strong>устгагдана</strong>; харин нэр
+      холбогдоогүй үр дүн болон AI-ийн аудит лог хадгалагдана — эмийн сан
+      системийн зан төлвийг хянаж, тайлагнаж чадахын тулд.</p>
+
+      <pre><code>npm run consultations:purge</code></pre>
+      <p>Хуваарьт (cron) тавина уу. Дахин ажиллуулахад аюулгүй — устгасныг
+      <code>purgedAt</code>-аар тэмдэглэдэг.</p>
+
+      <div class="note good">
+        <span class="note-tag">Хэн харж чадах</span>
+        <ul>
+          <li>Зөвлөгөөг эзэмшигч харилцагч</li>
+          <li>httpOnly cookie барьсан нэвтрээгүй хэрэглэгч</li>
+          <li><code>consultations.view</code> эрхтэй ажилтан — <strong>унших бүрт аудитад бичигдэнэ</strong></li>
+        </ul>
+        <p>Бусад бүх тохиолдолд <strong>404</strong> — 403 биш, ингэснээр
+        уншиж чадахгүй хүн зөвлөгөө байгаа эсэхийг ч батлаж чадахгүй.</p>
+      </div>
+    </section>
+
+    <!-- ───────────────────────────── 14 ───────────────────────────── -->
+    <section id="s14">
+      <h2><span class="num">14</span><span>Асуудал шийдвэрлэх</span></h2>
+      <p class="section-note">Бодитоор тохиолдсон бэрхшээлүүд.</p>
+
+      <div class="fault">
+        <p class="fault-sym">Build: <code>EPERM ... query_engine-windows.dll.node</code></p>
+        <p class="fault-why">Ажиллаж байгаа сервер Prisma-ийн эрхийг барьж байна.
+        Windows дээр <code>pkill</code> <strong>ажиллахгүй</strong> — PowerShell хэрэглэнэ.</p>
+        <pre><code>Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
+  Where-Object { $_.CommandLine -like '*ilikon-pharmacy*' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force }</code></pre>
+      </div>
+
+      <div class="fault">
+        <p class="fault-sym"><code>Could not find a production build</code></p>
+        <p class="fault-why">Build дундуур процесс тасалдаж <code>.next</code>
+        бүрэн бус үлдсэн.</p>
+        <pre><code>npm run build</code></pre>
+      </div>
+
+      <div class="fault">
+        <p class="fault-sym"><code>ports are not available: ... :3000</code></p>
+        <p class="fault-why">Порт 3000-ыг өөр зүйл эзэлж байна (dev сервер эсвэл
+        өөр төсөл). Эзэмшигчийг олж хаах, эсвэл tunnel ашиглаж байгаа бол
+        <code>ports:</code> блокийг авах.</p>
+        <pre><code>Get-NetTCPConnection -LocalPort 3000 -State Listen |
+  ForEach-Object { Get-Process -Id $_.OwningProcess }</code></pre>
+      </div>
+
+      <div class="fault">
+        <p class="fault-sym"><code>RATE LIMITED on /api/auth/login</code></p>
+        <p class="fault-why">Хамгаалалт зөв ажиллаж байна — IP тутам 5 минутад
+        8 оролдлого. Тестийг дараалан ажиллуулбал хүрнэ. 5 минут хүлээх, эсвэл
+        серверийг дахин эхлүүлбэл хязгаар цэвэрлэгдэнэ (санах ойд байдаг).</p>
+      </div>
+
+      <div class="fault">
+        <p class="fault-sym">DBeaver-т нэмсэн холболт алга болов</p>
+        <p class="fault-why">DBeaver нээлттэй байхад config бичсэн — гарахдаа
+        дарж бичсэн. Хаагаад скриптийг дахин ажиллуул.</p>
+      </div>
+
+      <div class="fault">
+        <p class="fault-sym">Терминалд кирилл үсэг эвдэрсэн харагдана</p>
+        <p class="fault-why">Windows PowerShell 5.1 нь BOM-гүй файлыг ANSI гэж
+        уншдаг. Терминалын дэлгэц эвдэрсэн ч <em>файл зөв байж болно</em> —
+        байтуудыг шалга. Өгөгдлийн санд кирилл бичихдээ shell-ээр биш,
+        UTF-8 файлаар:</p>
+        <pre><code>docker cp update.sql ilikon-db:/tmp/u.sql
+MSYS_NO_PATHCONV=1 docker exec ilikon-db psql -U ilikon -d ilikon -f /tmp/u.sql</code></pre>
+      </div>
+
+      <div class="fault">
+        <p class="fault-sym">Ажилтны формыг хадгалахад бүдэг алдаа</p>
+        <p class="fault-why">Нууц үг дүрэмд нийцээгүй байх магадлалтай:
+        <strong>8+ тэмдэгт, үсэг ба тоо</strong>. Одоо формд тухайн талбар дээр
+        нь шалтгаан харуулна.</p>
+      </div>
+
+      <div class="fault">
+        <p class="fault-sym">Гар утсан дээр цэс дээд талд намхан цагаан хавтан болно</p>
+        <p class="fault-why">Зассан. Шалтгаан нь <code>backdrop-filter</code>
+        бүхий элемент нь <code>position: fixed</code> удам садныхаа containing
+        block болдогт байсан. Ийм зүйл дахин гарвал <em>fixed</em> элементийг
+        бүдэгрүүлэлттэй элементийн гадна зөөнө.</p>
+      </div>
+
+      <div class="note tip">
+        <span class="note-tag">Ерөнхий дараалал</span>
+        <p><code>npm run typecheck</code> → <code>npm run build</code> →
+        серверийг дахин эхлүүлэх → тест. Алдааны хамгийн түгээмэл шалтгаан нь
+        <strong>хуучин процесс ажилласаар байгаа</strong> — хаясан гэж
+        бодсон ч.</p>
+      </div>
+    </section>
+
+    <footer>
+      <p>Иликон — Уужим Эмийн Сан · Ажиллагааны гарын авлага · 2026.08</p>
+      <p>Систем нь эмийн сангийн туслах, триаж хэрэгсэл — эмч, лицензтэй эм
+      зүйчийг орлохгүй. Эмнэлзүйн шийдвэрийг хүн гаргана.</p>
+    </footer>
+
+  </main>
+</div>

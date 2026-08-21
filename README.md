@@ -9,6 +9,21 @@ Next.js 15 (App Router) · TypeScript · PostgreSQL + Prisma · Tailwind CSS
 
 Repository: <https://github.com/aitmuhamed/Ilikon>
 
+**Монгол гарын авлага:** [`docs/garyn-avlaga.html`](docs/garyn-avlaga.html) —
+тохируулгаас AI зөвлөгөө, хостинг, асуудал шийдвэрлэх хүртэл 14 хэсэг.
+
+Татаж авах, PDF болгох:
+
+```bash
+# Файлыг татаад хөтчөөр нээх (интернэтгүй ч ажиллана)
+open docs/garyn-avlaga.html        # macOS
+start docs\garyn-avlaga.html       # Windows
+```
+
+Хөтөч дээр **Ctrl+P** (macOS: **Cmd+P**) → *Save as PDF*. Хуудас нь A4-т
+тохируулсан хэвлэх хэлбэртэй: агуулгын хажуугийн цэс нуугдаж, хэсэг бүр шинэ
+хуудаснаас эхэлж, код блокууд таслагдахгүй мөр дамжина.
+
 ---
 
 ## Quick start
