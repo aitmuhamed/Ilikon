@@ -377,6 +377,14 @@ npm run consultations:purge         # data-retention pass — run on a schedule
 docker compose --profile full up -d --build   # app + postgres
 ```
 
+**Cloudflare:** see [docs/CLOUDFLARE.md](docs/CLOUDFLARE.md). The quickest route
+is a Cloudflare Tunnel, which needs no code change and no public IP:
+
+```bash
+echo 'CLOUDFLARE_TUNNEL_TOKEN=...' >> .env
+docker compose --profile full --profile tunnel up -d --build
+```
+
 Then, inside the container or against the same database:
 
 ```bash

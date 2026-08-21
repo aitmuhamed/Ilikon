@@ -38,6 +38,32 @@ services:
       - ilikon_uploads:/app/storage/uploads
     profiles: ["full"]
 
+  # ── Cloudflare Tunnel ──────────────────────────────────────────────────
+  # Publishes the app on a Cloudflare hostname (TLS, WAF, DDoS, caching)
+  # without opening a single inbound port. The tunnel dials out to
+  # Cloudflare, so this works from a laptop, an office network or a VPS with
+  # no public IP.
+  #
+  #   docker compose --profile full --profile tunnel up -d
+  #
+  # Requires CLOUDFLARE_TUNNEL_TOKEN from:
+  #   Cloudflare dashboard → Zero Trust → Networks → Tunnels → Create a tunnel
+  # Point the tunnel's public hostname at http://app:3000.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: ilikon-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      # Plain default, not ${VAR:?...}: Compose interpolates every service
+      # before it filters by profile, so a required-variable form would break
+      # `docker compose up -d db` for anyone not using the tunnel.
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    # No depends_on: `app` lives in the `full` profile, and Compose rejects a
+    # dependency on a service that the active profile set excludes. cloudflared
+    # retries its origin connection on its own, so ordering is not needed.
+    profiles: ["tunnel"]
+
 volumes:
   ilikon_pgdata:
   ilikon_uploads:
