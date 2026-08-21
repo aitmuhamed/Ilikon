@@ -1,11 +1,42 @@
 # Hosting Иликон on Cloudflare
 
-Three ways to put this app behind Cloudflare, in increasing order of effort.
+Four ways to put this app behind Cloudflare, in increasing order of effort.
 Pick one — they are alternatives, not steps.
 
 **Read this first:** the app currently talks to a PostgreSQL database running in
 Docker on a local machine. Nothing in the cloud can reach that. Options 1 and 2
 keep the database where it is; option 3 requires a managed PostgreSQL first.
+
+---
+
+## Option 0 — Quick Tunnel (free, instant, no account at all)
+
+For a demo or a link to send someone, `cloudflared` can open a throwaway
+`*.trycloudflare.com` hostname with **no Cloudflare account, no domain and no
+token**:
+
+```bash
+NET=$(docker inspect ilikon-db --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}')
+
+# the app, with no host port published
+docker run -d --name ilikon-app-live --network "$NET"   -e DATABASE_URL="postgresql://ilikon:ilikon_dev_password@db:5432/ilikon?schema=public"   -e AUTH_SECRET="$(openssl rand -base64 48)"   -e STORAGE_DRIVER=local -e NODE_ENV=production   ilikon-pharmacy-app:latest
+
+# the tunnel
+docker run -d --name ilikon-quick-tunnel --network "$NET"   cloudflare/cloudflared:latest tunnel --no-autoupdate --url http://ilikon-app-live:3000
+
+docker logs ilikon-quick-tunnel 2>&1 | grep trycloudflare.com
+```
+
+Stop it with `docker rm -f ilikon-quick-tunnel ilikon-app-live`.
+
+**What you give up:** the hostname is random and changes every restart, there is
+no WAF or rate-limiting configuration, Cloudflare gives no uptime guarantee, and
+the tunnel dies with the container or when the machine sleeps. It is for demos,
+not for customers.
+
+**Before you share the link:** the seeded account passwords are published in this
+repository's README. Anyone with the URL can sign in as super admin. Rotate them,
+or only share the link while you are watching it.
 
 ---
 
