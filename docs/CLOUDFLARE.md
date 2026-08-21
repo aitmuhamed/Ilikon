@@ -44,6 +44,39 @@ docker compose exec app npx prisma migrate deploy
 docker compose exec app npm run db:seed
 ```
 
+### Port 3000 must be free
+
+The `app` service publishes 3000 on the host. If something already listens
+there (a `next start` from development, for instance), the container will not
+start:
+
+```
+Error response from daemon: ports are not available: ... bind: Only one usage
+of each socket address is normally permitted.
+```
+
+Stop whatever holds the port, or drop the `ports:` block from the `app` service
+entirely — with a tunnel it is not needed. cloudflared reaches the app over the
+internal Compose network, and not publishing the port means the origin cannot be
+hit directly, bypassing Cloudflare's WAF. That is the better setup for
+production.
+
+### Verified
+
+The production image and the tunnel wiring were tested end to end on
+2026-08-21:
+
+- `docker compose --profile full build app` — builds clean
+- the container reports `healthy` and serves `/mn`, `/mn/consultation`,
+  `/mn/products`, `/mn/contact`; `/admin` correctly 307s to login
+- the full suites pass **against the container**, not just the dev server:
+  56/56 (`scripts/e2e.mjs`) and 37/37 (`scripts/consultation-e2e.mjs`)
+- `cloudflare/cloudflared:2026.8.2` pulls and runs
+- a sibling container reaches `http://app:3000/mn` over the Compose network,
+  which is exactly the hop cloudflared makes
+
+The only thing not exercised is the tunnel itself, which needs a real token.
+
 Then, in the Cloudflare dashboard:
 
 - **SSL/TLS → Overview:** set encryption mode to **Full (strict)**.
