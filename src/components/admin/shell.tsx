@@ -113,15 +113,23 @@ export function AdminShell({
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-ink-800/60 px-4">
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-            <path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7V3z" fill="currentColor" />
-          </svg>
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-white">{pharmacyName}</p>
-          <p className="text-[10px] uppercase tracking-wider text-ink-400">{d.admin.title}</p>
-        </div>
+        {/* The logo is the way back to the dashboard, as it is in every admin
+            panel. The storefront has its own link in the header below. */}
+        <Link
+          href="/admin"
+          className="flex min-w-0 items-center gap-2.5 rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+          aria-label={d.admin.dashboard}
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-white">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
+              <path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7V3z" fill="currentColor" />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-white">{pharmacyName}</p>
+            <p className="text-[10px] uppercase tracking-wider text-ink-400">{d.admin.title}</p>
+          </div>
+        </Link>
         <button
           type="button"
           onClick={() => setMobileOpen(false)}

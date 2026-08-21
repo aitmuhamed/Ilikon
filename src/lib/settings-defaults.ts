@@ -93,15 +93,19 @@ export const DEFAULT_SETTINGS: PharmacySettings = {
   phone: '7700-1234',
   phoneSecondary: '9911-2233',
   email: 'info@ilikon.mn',
-  addressMn: 'Улаанбаатар, Сүхбаатар дүүрэг, 1-р хороо, Энхтайваны өргөн чөлөө 25, Иликон төв',
-  addressEn: 'Ilikon Centre, 25 Peace Avenue, Khoroo 1, Sukhbaatar District, Ulaanbaatar',
-  addressRu: 'Улан-Батор, Сухэ-Баторский район, 1-й хороо, проспект Мира 25, центр Иликон',
+  // Reverse-geocoded from the pharmacy's own Google Maps listing
+  // ("Иликон ( уужим эмийн сан)", 47.9218481 106.956691). The khoroo and the
+  // street/building number are not in any public source for this pin — add
+  // them in Admin → Settings.
+  addressMn: 'Улаанбаатар, Баянзүрх дүүрэг, Алтан өлгий, Иликон Уужим Эмийн Сан (13360)',
+  addressEn: 'Ilikon Uujim Pharmacy, Altan Olgii, Bayanzurkh District, Ulaanbaatar 13360, Mongolia',
+  addressRu: 'Аптека Иликон Уужим, Алтан Өлгий, Баянзүрх дүүрэг, Улан-Батор 13360, Монголия',
   // Coordinates of the real branch, resolved from the pharmacy's Google Maps
   // listing ("Иликон ( уужим эмийн сан)"). A maps.app.goo.gl short link cannot
   // be put in an iframe, so the embed uses the coordinates and the outbound
   // link uses the short link, which opens the actual place card.
   mapEmbedUrl: 'https://www.google.com/maps?q=47.9218481,106.956691&z=17&hl=mn&output=embed',
-  mapLink: 'https://maps.app.goo.gl/AEZh3xfh5b1p4aAG8',
+  mapLink: 'https://maps.app.goo.gl/emxT3Fow9HQvU5rS6',
   licenseNumber: 'ЭМГ-2019/0457',
   workingHoursWeekdays: '09:00 - 21:00',
   workingHoursSaturday: '10:00 - 19:00',

@@ -31,15 +31,29 @@ export function Modal({
 }) {
   const panelRef = React.useRef<HTMLDivElement>(null)
 
+  /**
+   * `onClose` is almost always an inline arrow (`onClose={() => setForm(null)}`),
+   * so it has a new identity on every render. Holding it in a ref keeps the
+   * effects below from depending on it.
+   *
+   * This is not a micro-optimisation. When the effects depended on `onClose`,
+   * every keystroke inside the dialog re-ran them, and the autofocus timer
+   * fired again 30ms later and yanked focus back to the first field — so typing
+   * a single character appeared to dismiss the form. Autofocus must happen when
+   * the dialog opens, and never again.
+   */
+  const onCloseRef = React.useRef(onClose)
+  React.useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
+  // Escape to close, Tab to cycle focus inside the panel.
   React.useEffect(() => {
     if (!open) return
 
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
         return
       }
       if (event.key !== 'Tab' || !panelRef.current) return
@@ -61,18 +75,29 @@ export function Modal({
     }
 
     document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [open])
+
+  // Scroll lock, tied only to open/close.
+  React.useEffect(() => {
+    if (!open) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
+
+  // Initial focus — once per opening.
+  React.useEffect(() => {
+    if (!open) return
     const timer = window.setTimeout(() => {
       panelRef.current
         ?.querySelector<HTMLElement>('[data-autofocus], button, input, select, textarea, a[href]')
         ?.focus()
     }, 30)
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = previousOverflow
-      window.clearTimeout(timer)
-    }
-  }, [open, onClose])
+    return () => window.clearTimeout(timer)
+  }, [open])
 
   if (!open) return null
 
@@ -208,17 +233,27 @@ export function Drawer({
   footer?: React.ReactNode
   width?: string
 }) {
+  // Same reason as `Modal`: callers pass an inline `onClose`, so keeping it in
+  // a ref stops this effect from tearing down and re-registering on every
+  // render of the drawer's contents.
+  const onCloseRef = React.useRef(onClose)
+  React.useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
   React.useEffect(() => {
     if (!open) return
     const previous = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    const onKeyDown = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onCloseRef.current()
+    }
     document.addEventListener('keydown', onKeyDown)
     return () => {
       document.body.style.overflow = previous
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
 
