@@ -14,6 +14,17 @@
  *
  * Anything it flags is a real risk; a clean run is not proof of a perfect
  * layout, only that these specific traps are absent.
+ *
+ * NOT covered — check these by hand on a real phone:
+ *
+ *   • A `position: fixed` drawer nested inside an element with
+ *     `backdrop-filter` (Tailwind `backdrop-blur`). The blurred element becomes
+ *     the containing block, so the drawer collapses into it instead of filling
+ *     the viewport. This bit the storefront header once. Detecting it reliably
+ *     needs a JSX parser, and a line-based approximation reported "clean" while
+ *     the bug was present, which is worse than not checking at all.
+ *   • Anything that only misbehaves after hydration, since this reads the
+ *     server-rendered HTML.
  */
 const PORT = process.argv[2] ?? '3007'
 const BASE = `http://localhost:${PORT}`
@@ -168,9 +179,10 @@ async function main() {
 
   console.log(
     pagesWithIssues === 0
-      ? '\n✅  No horizontal-overflow traps found\n'
-      : `\n⚠️   ${totalFindings} finding(s) across ${pagesWithIssues} page(s)\n`,
+      ? '\nOK  No horizontal-overflow traps found\n'
+      : `\n!!  ${totalFindings} finding(s) across ${pagesWithIssues} page(s)\n`,
   )
+  if (pagesWithIssues > 0) process.exitCode = 1
 }
 
 main().catch((error) => {

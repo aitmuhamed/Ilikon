@@ -77,7 +77,8 @@ export function Header({
   ]
 
   return (
-    <header className="sticky top-0 z-40 border-b border-ink-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85">
+    <>
+      <header className="sticky top-0 z-40 border-b border-ink-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85">
       {/* Trust strip */}
       <div className="hidden bg-brand-700 text-white lg:block">
         <div className="container-page flex h-9 items-center justify-between text-xs">
@@ -262,6 +263,18 @@ export function Header({
         </nav>
       </div>
 
+      </header>
+
+      {/*
+        Rendered as a sibling of <header>, NOT inside it.
+
+        The header carries `backdrop-blur`, and an element with a
+        `backdrop-filter` becomes the containing block for any `position: fixed`
+        descendant. Inside the header, the drawer's `fixed inset-0` resolved
+        against the header's own box instead of the viewport, so on a phone it
+        collapsed into a short white panel across the top of the page with the
+        content still visible underneath.
+      */}
       {mobileOpen ? (
         <MobileMenu
           categories={categories}
@@ -271,7 +284,7 @@ export function Header({
           navLinks={navLinks}
         />
       ) : null}
-    </header>
+    </>
   )
 }
 
