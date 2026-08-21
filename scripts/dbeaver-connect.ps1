@@ -26,7 +26,11 @@ param(
     [string] $Port     = '5439',
     [string] $Database = 'ilikon',
     [string] $User     = 'ilikon',
-    [string] $Name     = 'Иликон (local Postgres)',
+    # ASCII on purpose: Windows PowerShell 5.1 reads a BOM-less .ps1 as ANSI,
+    # so a Cyrillic literal here would be written to the JSON double-encoded
+    # and show up in DBeaver as mojibake. Rename it in DBeaver if you want
+    # Cyrillic - DBeaver writes its own config correctly.
+    [string] $Name     = 'Ilikon (local Postgres)',
     [switch] $Force
 )
 
@@ -95,8 +99,11 @@ $connection = [ordered]@{
 $json.connections | Add-Member -NotePropertyName $connectionId `
     -NotePropertyValue ([pscustomobject]$connection) -Force
 
-# DBeaver writes tab-indented JSON; depth 20 covers the nested config.
-$json | ConvertTo-Json -Depth 20 | Set-Content $configPath -Encoding utf8
+# Depth 20 covers the nested configuration object. Written through .NET with
+# an explicit no-BOM UTF-8 encoder: `Set-Content -Encoding utf8` emits a BOM on
+# Windows PowerShell 5.1, and DBeaver's own file does not have one.
+$out = $json | ConvertTo-Json -Depth 20
+[System.IO.File]::WriteAllText($configPath, $out, (New-Object System.Text.UTF8Encoding($false)))
 
 Write-Host ""
 Write-Host "Connection registered:" -ForegroundColor Green
