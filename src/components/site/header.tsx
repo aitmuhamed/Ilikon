@@ -416,7 +416,7 @@ function MobileMenu({
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       <div className="absolute inset-0 bg-ink-900/45" onClick={onClose} aria-hidden />
-      <aside className="relative z-10 flex h-full w-[86%] max-w-sm animate-slide-in-right flex-col bg-white shadow-pop">
+      <aside className="relative z-10 flex h-full w-[86%] max-w-sm animate-slide-in-left flex-col bg-white shadow-pop">
         <div className="flex items-center justify-between border-b border-ink-100 px-4 py-3.5">
           <div className="flex items-center gap-2.5">
             <Logo className="h-9 w-9" />

@@ -9,6 +9,10 @@
 const PORT = process.argv[2] ?? '3007'
 const BASE = `http://localhost:${PORT}`
 
+// Test-account password. Defaults to the seeded value; override with
+// TEST_PASSWORD once the accounts have been rotated (npm run rotate:passwords).
+const TEST_PASSWORD = process.env.TEST_PASSWORD ?? 'Ilikon2026!'
+
 const jars = new Map()
 function jar(name) {
   if (!jars.has(name)) jars.set(name, new Map())
@@ -210,7 +214,7 @@ async function main() {
 
     const login = await call('rx', '/api/auth/login', {
       method: 'POST',
-      body: { identifier: 'pharmacist@ilikon.mn', password: 'Ilikon2026!' },
+      body: { identifier: 'pharmacist@ilikon.mn', password: TEST_PASSWORD },
     })
     check('pharmacist login', login.status === 200, `status ${login.status}`)
 

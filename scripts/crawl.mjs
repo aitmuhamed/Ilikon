@@ -5,13 +5,22 @@
 const PORT = process.argv[2] ?? '3000'
 const BASE = `http://localhost:${PORT}`
 
+// Test-account password. Defaults to the seeded value; override with
+// TEST_PASSWORD once the accounts have been rotated (npm run rotate:passwords).
+const TEST_PASSWORD = process.env.TEST_PASSWORD ?? 'Ilikon2026!'
+
+// Per-account overrides, for when accounts have been rotated to different
+// passwords: TEST_PASSWORD_MAP='{"admin@ilikon.mn":"...","orders@ilikon.mn":"..."}'
+const PASSWORD_MAP = JSON.parse(process.env.TEST_PASSWORD_MAP ?? '{}')
+const passwordFor = (identifier) => PASSWORD_MAP[identifier] ?? TEST_PASSWORD
+
 const cookies = new Map()
 
 async function login(identifier) {
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ identifier, password: 'Ilikon2026!' }),
+    body: JSON.stringify({ identifier, password: passwordFor(identifier) }),
   })
   const jar = []
   for (const raw of res.headers.getSetCookie?.() ?? []) jar.push(raw.split(';')[0])

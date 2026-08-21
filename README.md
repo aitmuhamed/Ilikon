@@ -43,7 +43,28 @@ npm run dev            # http://localhost:3000
 
 ### Demo accounts
 
-Password for every seeded account: **`Ilikon2026!`**
+The seed gives every account the same password, `Ilikon2026!`. That is fine on a
+laptop and **unacceptable the moment the app is reachable from the internet** —
+this file is public, so the password is too.
+
+Rotate before exposing the app anywhere:
+
+```bash
+npm run rotate:passwords            # staff accounts
+npm run rotate:passwords -- --customers   # staff + customers
+```
+
+It issues one strong random password per account and prints them once. Re-running
+`npm run db:seed` will not undo it — the seed leaves an existing password hash
+alone.
+
+After rotating, the test scripts need the new values:
+
+```bash
+export TEST_PASSWORD='...'                     # if every account shares one
+export TEST_PASSWORD_MAP='{"admin@ilikon.mn":"...","orders@ilikon.mn":"..."}'
+npm run test:e2e 3007
+```
 
 | Role              | Login                   | Can do                                        |
 | ----------------- | ----------------------- | --------------------------------------------- |
@@ -366,6 +387,7 @@ npm run dev            npm run build          npm start
 npm run typecheck      npm run db:seed        npm run db:reset
 npm run prisma:migrate npm run prisma:studio
 
+npm run responsive:audit 3007       # horizontal-overflow traps across every admin page
 npm run test:consultation           # consultation engine scenarios (no server needed)
 npm run test:consultation:e2e 3007  # consultation over HTTP (server must be running)
 npm run consultations:purge         # data-retention pass — run on a schedule

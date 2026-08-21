@@ -21,6 +21,8 @@
     "test:consultation": "tsx --conditions=react-server --env-file=.env scripts/consultation-smoke.ts",
     "test:consultation:e2e": "node scripts/consultation-e2e.mjs",
     "consultations:purge": "tsx --conditions=react-server --env-file=.env scripts/consultation-purge.ts",
+    "rotate:passwords": "tsx --conditions=react-server --env-file=.env scripts/rotate-passwords.ts",
+    "responsive:audit": "node scripts/responsive-audit.mjs",
     "test:crawl": "node scripts/crawl.mjs"
   },
   "prisma": {

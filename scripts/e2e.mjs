@@ -5,6 +5,15 @@
 const PORT = process.argv[2] ?? '3007'
 const BASE = `http://localhost:${PORT}`
 
+// Test-account password. Defaults to the seeded value; override with
+// TEST_PASSWORD once the accounts have been rotated (npm run rotate:passwords).
+const TEST_PASSWORD = process.env.TEST_PASSWORD ?? 'Ilikon2026!'
+
+// Per-account overrides, for when accounts have been rotated to different
+// passwords: TEST_PASSWORD_MAP='{"admin@ilikon.mn":"...","orders@ilikon.mn":"..."}'
+const PASSWORD_MAP = JSON.parse(process.env.TEST_PASSWORD_MAP ?? '{}')
+const passwordFor = (identifier) => PASSWORD_MAP[identifier] ?? TEST_PASSWORD
+
 const jars = new Map()
 
 function jar(name) {
@@ -62,7 +71,7 @@ function check(label, ok, detail = '') {
 async function login(who, identifier) {
   const res = await call(who, '/api/auth/login', {
     method: 'POST',
-    body: { identifier, password: 'Ilikon2026!' },
+    body: { identifier, password: passwordFor(identifier) },
   })
   // The login endpoint allows 8 attempts per IP per 5 minutes. Running this
   // suite twice in quick succession legitimately trips it — surface that

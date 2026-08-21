@@ -77,6 +77,13 @@ const config: Config = {
           from: { transform: 'translateX(100%)' },
           to: { transform: 'translateX(0)' },
         },
+        // Left-anchored drawers (the admin sidebar, the storefront menu) must
+        // come in from the left edge; using the right variant made them fly
+        // across the screen and snap into place.
+        'slide-in-left': {
+          from: { transform: 'translateX(-100%)' },
+          to: { transform: 'translateX(0)' },
+        },
         shimmer: { '100%': { transform: 'translateX(100%)' } },
         'bounce-dot': {
           '0%, 80%, 100%': { transform: 'scale(0.6)', opacity: '0.5' },
@@ -87,6 +94,7 @@ const config: Config = {
         'fade-in': 'fade-in 200ms ease-out',
         'slide-up': 'slide-up 220ms cubic-bezier(0.16,1,0.3,1)',
         'slide-in-right': 'slide-in-right 260ms cubic-bezier(0.16,1,0.3,1)',
+        'slide-in-left': 'slide-in-left 260ms cubic-bezier(0.16,1,0.3,1)',
         shimmer: 'shimmer 1.6s infinite',
         'bounce-dot': 'bounce-dot 1.2s infinite ease-in-out',
       },

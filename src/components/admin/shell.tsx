@@ -101,6 +101,22 @@ export function AdminShell({
 
   React.useEffect(() => setMobileOpen(false), [pathname])
 
+  // While the mobile drawer is open, Escape should close it and the page
+  // behind it should not scroll — the same contract the modals honour.
+  React.useEffect(() => {
+    if (!mobileOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileOpen])
+
   async function logout() {
     setLoggingOut(true)
     try {
@@ -230,7 +246,7 @@ export function AdminShell({
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-ink-900/60" onClick={() => setMobileOpen(false)} aria-hidden />
-          <aside className="relative z-10 h-full w-[82%] max-w-xs animate-slide-in-right bg-ink-900">
+          <aside className="relative z-10 h-full w-[82%] max-w-xs animate-slide-in-left bg-ink-900">
             {sidebar}
           </aside>
         </div>
